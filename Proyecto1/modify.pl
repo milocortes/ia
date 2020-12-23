@@ -34,9 +34,9 @@ change_value_class_relation(Class,Relation,NewClassRelated,KB,NewKB):-
 %Change the name of an object	
 
 change_object_name(Object,NewName,OriginalKB,NewKB) :-
-	changeElement(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,Props,Rels,NewObjects),OriginalKB,TemporalKB),
-	isElement([id=>Object|Properties],Objects),
-	changeElement([id=>Object|Properties],[id=>NewName|Properties],Objects,NewObjects),
+	cambiar_elem(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,Props,Rels,NewObjects),OriginalKB,TemporalKB),
+	verifica_elemelem([id=>Object|Properties],Objects),
+	cambiar_elem([id=>Object|Properties],[id=>NewName|Properties],Objects,NewObjects),
 	change_relations_with_object(Object,NewName,TemporalKB,NewKB).
 	
 change_relations_with_object(_,_,[],[]).
@@ -67,6 +67,6 @@ change_relation(OldName,NewName,[H|T],[H|NewT]):-
 %Change the name of a class
 
 change_class_name(Class,NewName,KB,NewKB):-
-	changeElement(class(Class,Mother,Props,Rels,Objects),class(NewName,Mother,Props,Rels,Objects),KB,TemporalKB),
+	cambiar_elem(class(Class,Mother,Props,Rels,Objects),class(NewName,Mother,Props,Rels,Objects),KB,TemporalKB),
 	changeMother(Class,NewName,TemporalKB,TemporalKB2),
 	change_relations_with_object(Class,NewName,TemporalKB2,NewKB).

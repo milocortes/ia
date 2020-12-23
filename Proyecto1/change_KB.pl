@@ -52,7 +52,7 @@ add_class(NewClass,Mother,OriginalKB,NewKB) :-
 %Add new class property
 
 add_class_property(Class,NewProperty,Value,OriginalKB,NewKB) :-
-	changeElement(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,NewProps,Rels,Objects),OriginalKB,NewKB),
+	cambiar_elem(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,NewProps,Rels,Objects),OriginalKB,NewKB),
 	append_property(Props,NewProperty,Value,NewProps).
 
 append_property(Props,NewProperty,yes,NewProps):-
@@ -68,7 +68,7 @@ append_property(Props,NewProperty,Value,NewProps):-
 %Add new class relation
 
 add_class_relation(Class,NewRelation,OtherClass,OriginalKB,NewKB) :-
-	changeElement(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,Props,NewRels,Objects),OriginalKB,NewKB),
+	cambiar_elem(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,Props,NewRels,Objects),OriginalKB,NewKB),
 	append_relation(Rels,NewRelation,OtherClass,NewRels).
 
 append_relation(Rels,not(NewRelation),OtherClass,NewRels):-
@@ -81,25 +81,25 @@ append_relation(Rels,NewRelation,OtherClass,NewRels):-
 %Add new object
 
 add_object(NewObject,Class,OriginalKB,NewKB) :-
-	changeElement(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,Props,Rels,NewObjects),OriginalKB,NewKB),
+	cambiar_elem(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,Props,Rels,NewObjects),OriginalKB,NewKB),
 	append(Objects,[[id=>NewObject,[],[]]],NewObjects).
 
 
 %Add new object property
 
 add_object_property(Object,NewProperty,Value,OriginalKB,NewKB) :-
-	changeElement(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,Props,Rels,NewObjects),OriginalKB,NewKB),
-	isElement([id=>Object,Properties,Relations],Objects),
-	changeElement([id=>Object,Properties,Relations],[id=>Object,NewProperties,Relations],Objects,NewObjects),
+	cambiar_elem(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,Props,Rels,NewObjects),OriginalKB,NewKB),
+	verifica_elem([id=>Object,Properties,Relations],Objects),
+	cambiar_elem([id=>Object,Properties,Relations],[id=>Object,NewProperties,Relations],Objects,NewObjects),
 	append_property(Properties,NewProperty,Value,NewProperties).
 
 
 %Add new object relation
 
 add_object_relation(Object,NewRelation,OtherObject,OriginalKB,NewKB) :-
-	changeElement(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,Props,Rels,NewObjects),OriginalKB,NewKB),
-	isElement([id=>Object,Properties,Relations],Objects),
-	changeElement([id=>Object,Properties,Relations],[id=>Object,Properties,NewRelations],Objects,NewObjects),
+	cambiar_elem(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,Props,Rels,NewObjects),OriginalKB,NewKB),
+	verifica_elem([id=>Object,Properties,Relations],Objects),
+	cambiar_elem([id=>Object,Properties,Relations],[id=>Object,Properties,NewRelations],Objects,NewObjects),
 	append_relation(Relations,NewRelation,OtherObject,NewRelations).
 
 
@@ -112,55 +112,55 @@ add_object_relation(Object,NewRelation,OtherObject,OriginalKB,NewKB) :-
 %Remove a class property
 
 rm_class_property(Class,Property,OriginalKB,NewKB) :-
-	changeElement(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,NewProps,Rels,Objects),OriginalKB,NewKB),
+	cambiar_elem(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,NewProps,Rels,Objects),OriginalKB,NewKB),
 	deleteAllElementsWithSameProperty(Property,Props,Aux),
-	deleteElement(not(Property),Aux,Aux2),
-	deleteElement(Property,Aux2,NewProps).
+	eliminar_elem(not(Property),Aux,Aux2),
+	eliminar_elem(Property,Aux2,NewProps).
 
 
 %Remove a class relation
 
 rm_class_relation(Class,not(Relation),OriginalKB,NewKB) :-
-	changeElement(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,Props,NewRels,Objects),OriginalKB,NewKB),
+	cambiar_elem(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,Props,NewRels,Objects),OriginalKB,NewKB),
 	deleteAllElementsWithSameNegatedProperty(Relation,Rels,NewRels).
 
 rm_class_relation(Class,Relation,OriginalKB,NewKB) :-
-	changeElement(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,Props,NewRels,Objects),OriginalKB,NewKB),
+	cambiar_elem(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,Props,NewRels,Objects),OriginalKB,NewKB),
 	deleteAllElementsWithSameProperty(Relation,Rels,NewRels).
 
 
 %Remove an object property
 
 rm_object_property(Object,Property,OriginalKB,NewKB) :-
-	changeElement(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,Props,Rels,NewObjects),OriginalKB,NewKB),
-	isElement([id=>Object,Properties,Relations],Objects),
-	changeElement([id=>Object,Properties,Relations],[id=>Object,NewProperties,Relations],Objects,NewObjects),
+	cambiar_elem(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,Props,Rels,NewObjects),OriginalKB,NewKB),
+	verifica_elem([id=>Object,Properties,Relations],Objects),
+	cambiar_elem([id=>Object,Properties,Relations],[id=>Object,NewProperties,Relations],Objects,NewObjects),
 	deleteAllElementsWithSameProperty(Property,Properties,Aux),
-	deleteElement(not(Property),Aux,Aux2),
-	deleteElement(Property,Aux2,NewProperties).
+	eliminar_elem(not(Property),Aux,Aux2),
+	eliminar_elem(Property,Aux2,NewProperties).
 
 
 %Remove an object relation
 
 rm_object_relation(Object,not(Relation),OriginalKB,NewKB) :-
-	changeElement(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,Props,Rels,NewObjects),OriginalKB,NewKB),
-	isElement([id=>Object,Properties,Relations],Objects),
-	changeElement([id=>Object,Properties,Relations],[id=>Object,Properties,NewRelations],Objects,NewObjects),
+	cambiar_elem(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,Props,Rels,NewObjects),OriginalKB,NewKB),
+	verifica_elem([id=>Object,Properties,Relations],Objects),
+	cambiar_elem([id=>Object,Properties,Relations],[id=>Object,Properties,NewRelations],Objects,NewObjects),
 	deleteAllElementsWithSameNegatedProperty(Relation,Relations,NewRelations).
 
 rm_object_relation(Object,Relation,OriginalKB,NewKB) :-
-	changeElement(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,Props,Rels,NewObjects),OriginalKB,NewKB),
-	isElement([id=>Object,Properties,Relations],Objects),
-	changeElement([id=>Object,Properties,Relations],[id=>Object,Properties,NewRelations],Objects,NewObjects),
+	cambiar_elem(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,Props,Rels,NewObjects),OriginalKB,NewKB),
+	verifica_elem([id=>Object,Properties,Relations],Objects),
+	cambiar_elem([id=>Object,Properties,Relations],[id=>Object,Properties,NewRelations],Objects,NewObjects),
 	deleteAllElementsWithSameProperty(Relation,Relations,NewRelations).
 	
 
 %Remove an object
 
 rm_object(Object,OriginalKB,NewKB) :-
-	changeElement(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,Props,Rels,NewObjects),OriginalKB,TemporalKB),
-	isElement([id=>Object|Properties],Objects),
-	deleteElement([id=>Object|Properties],Objects,NewObjects),
+	cambiar_elem(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,Props,Rels,NewObjects),OriginalKB,TemporalKB),
+	verifica_elem([id=>Object|Properties],Objects),
+	eliminar_elem([id=>Object|Properties],Objects,NewObjects),
 	delete_relations_with_object(Object,TemporalKB,NewKB).
 	
 delete_relations_with_object(_,[],[]).
@@ -191,7 +191,7 @@ cancel_relation(Object,[H|T],[H|NewT]):-
 % Remove a class
 
 rm_class(Class,OriginalKB,NewKB) :-
-	deleteElement(class(Class,Mother,_,_,_),OriginalKB,TemporalKB),
+	eliminar_elem(class(Class,Mother,_,_,_),OriginalKB,TemporalKB),
 	changeMother(Class,Mother,TemporalKB,TemporalKB2),
 	delete_relations_with_object(Class,TemporalKB2,NewKB).
 
@@ -230,9 +230,9 @@ change_value_class_relation(Class,Relation,NewClassRelated,KB,NewKB):-
 %Change the name of an object	
 
 change_object_name(Object,NewName,OriginalKB,NewKB) :-
-	changeElement(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,Props,Rels,NewObjects),OriginalKB,TemporalKB),
-	isElement([id=>Object|Properties],Objects),
-	changeElement([id=>Object|Properties],[id=>NewName|Properties],Objects,NewObjects),
+	cambiar_elem(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,Props,Rels,NewObjects),OriginalKB,TemporalKB),
+	verifica_elem([id=>Object|Properties],Objects),
+	cambiar_elem([id=>Object|Properties],[id=>NewName|Properties],Objects,NewObjects),
 	change_relations_with_object(Object,NewName,TemporalKB,NewKB).
 	
 change_relations_with_object(_,_,[],[]).
@@ -263,7 +263,7 @@ change_relation(OldName,NewName,[H|T],[H|NewT]):-
 %Change the name of a class
 
 change_class_name(Class,NewName,KB,NewKB):-
-	changeElement(class(Class,Mother,Props,Rels,Objects),class(NewName,Mother,Props,Rels,Objects),KB,TemporalKB),
+	cambiar_elem(class(Class,Mother,Props,Rels,Objects),class(NewName,Mother,Props,Rels,Objects),KB,TemporalKB),
 	changeMother(Class,NewName,TemporalKB,TemporalKB2),
 	change_relations_with_object(Class,NewName,TemporalKB2,NewKB).
 
@@ -292,10 +292,10 @@ there_is_class(Class,[_|T],Answer):-
 there_is_object(_,[],unknown).
 
 there_is_object(Object,[class(_,_,_,_,O)|_],no):-
-	isElement([id=>not(Object),_,_],O).
+	verifica_elem([id=>not(Object),_,_],O).
 
 there_is_object(Object,[class(_,_,_,_,O)|_],yes):-
-	isElement([id=>Object,_,_],O).
+	verifica_elem([id=>Object,_,_],O).
 
 there_is_object(Object,[_|T],Answer):-
 	there_is_object(Object,T,Answer).
@@ -363,29 +363,29 @@ concat_ancestors_properties([Ancestor|T],KB,[Properties|NewT]):-
 	properties_only_in_the_class(Ancestor,KB,Properties).
 
 cancel_repeated_property_values(X,Z):-
-	append_list_of_lists(X,Y),
+	aplana_un_nivel(X,Y),
 	delete_repeated_properties(Y,Z).
 
 delete_repeated_properties([],[]).
 
 delete_repeated_properties([P=>V|T],[P=>V|NewT]):-
 	deleteAllElementsWithSameProperty(P,T,L1),
-	deleteElement(not(P=>V),L1,L2),
+	eliminar_elem(not(P=>V),L1,L2),
 	delete_repeated_properties(L2,NewT).
 
 delete_repeated_properties([not(P=>V)|T],[not(P=>V)|NewT]):-
 	deleteAllElementsWithSameNegatedProperty(P,T,L1),
-	deleteElement(P=>V,L1,L2),
+	eliminar_elem(P=>V,L1,L2),
 	delete_repeated_properties(L2,NewT).
 
 delete_repeated_properties([not(H)|T],[not(H)|NewT]):-
-	deleteElement(not(H),T,L1),
-	deleteElement(H,L1,L2),
+	eliminar_elem(not(H),T,L1),
+	eliminar_elem(H,L1,L2),
 	delete_repeated_properties(L2,NewT).
 
 delete_repeated_properties([H|T],[H|NewT]):-
-	deleteElement(H,T,L1),
-	deleteElement(not(H),L1,L2),
+	eliminar_elem(H,T,L1),
+	eliminar_elem(not(H),L1,L2),
 	delete_repeated_properties(L2,NewT).
 
 
@@ -398,11 +398,11 @@ class_has_property(Class,Property,KB,Answer):-
 
 incomplete_information(_,[], unknown).
 
-incomplete_information(Atom, List, yes):- isElement(Atom,List).
+incomplete_information(Atom, List, yes):- verifica_elem(Atom,List).
 
-incomplete_information(not(Atom), List, no):- isElement(Atom,List).
+incomplete_information(not(Atom), List, no):- verifica_elem(Atom,List).
 
-incomplete_information(Atom, List, no):- isElement(not(Atom),List).
+incomplete_information(Atom, List, no):- verifica_elem(not(Atom),List).
 
 incomplete_information(_, _, unknown).
 
@@ -432,7 +432,7 @@ find_value(Attribute,[_|T],Value):-
 class_of_an_object(_,[],unknown):-!.
 
 class_of_an_object(Object,[class(C,_,_,_,O)|_],C):-
-	isElement([id=>Object,_,_],O).
+	verifica_elem([id=>Object,_,_],O).
 
 class_of_an_object(Object,[_|T],Class):-
 	class_of_an_object(Object,T,Class).
@@ -454,7 +454,7 @@ object_properties(_,_,unknown).
 properties_only_in_the_object(_,[],[]).
 
 properties_only_in_the_object(Object,[class(_,_,_,_,O)|_],Properties):-
-	isElement([id=>Object,Properties,_],O).
+	verifica_elem([id=>Object,Properties,_],O).
 
 properties_only_in_the_object(Object,[_|T],Properties):-
 	properties_only_in_the_object(Object,T,Properties).
@@ -555,7 +555,7 @@ object_relations(_,_,unknown).
 relations_only_in_the_object(_,[],[]).
 
 relations_only_in_the_object(Object,[class(_,_,_,_,O)|_],Relations):-
-	isElement([id=>Object,_,Relations],O).
+	verifica_elem([id=>Object,_,Relations],O).
 
 relations_only_in_the_object(Object,[_|T],Relations):-
 	relations_only_in_the_object(Object,T,Relations).
