@@ -3,7 +3,8 @@
                    rm_class_relation/4,
                    rm_object/3,
                    rm_object_property/4,
-                   rm_object_relation/4]).
+				   rm_object_relation/4, 
+				   changeMother/4]).
 
 :- use_module(utils).
 
