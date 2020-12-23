@@ -752,8 +752,10 @@ expand_classes_to_objects([X=>Y|T],[X=>Objects|NewT],KB):-
 	objects_of_a_class(Y,KB,Objects),
 	expand_classes_to_objects(T,NewT,KB).
 
+
 expand_classes_to_objects([not(X=>Y)|T],[not(X=>[Y])|NewT],KB):-
 	expand_classes_to_objects(T,NewT,KB).
+
 
 expand_classes_to_objects([X=>Y|T],[X=>[Y]|NewT],KB):-
 	expand_classes_to_objects(T,NewT,KB).
