@@ -35,7 +35,7 @@ change_value_class_relation(Class,Relation,NewClassRelated,KB,NewKB):-
 
 change_object_name(Object,NewName,OriginalKB,NewKB) :-
 	cambiar_elem(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,Props,Rels,NewObjects),OriginalKB,TemporalKB),
-	verifica_elemelem([id=>Object|Properties],Objects),
+	verifica_elem([id=>Object|Properties],Objects),
 	cambiar_elem([id=>Object|Properties],[id=>NewName|Properties],Objects,NewObjects),
 	change_relations_with_object(Object,NewName,TemporalKB,NewKB).
 	

@@ -157,7 +157,7 @@ cancel_repeated_property_values(X,Z):-
 delete_repeated_properties([],[]).
 
 delete_repeated_properties([P=>V|T],[P=>V|NewT]):-
-	deleteAllElementsWithSameProperty(P,T,L1),
+	borraTodoElementoConIgualPropiedad(P,T,L1),
 	eliminar_elem(not(P=>V),L1,L2),
 	delete_repeated_properties(L2,NewT).
 

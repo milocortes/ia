@@ -2,7 +2,7 @@
                   eliminar_elem/3, 
                   verifica_elem/2, 
                   aplana_un_nivel/2,
-                  deleteAllElementsWithSameProperty/3,
+                  borraTodoElementoConIgualPropiedad/3,
                   deleteAllElementsWithSameNegatedProperty/3,
                   op(800,xfx,'=>')]).
 
@@ -32,7 +32,7 @@ cambiar_elem(O,R,[O|T],[R|T2]):-
 
 %Caso recursivo:
 %Si el Head de la lista no es el mismo
-%que el elemento O, continuamos procesando el Tail
+%que e+ontinuamos procesando el Tail
 cambiar_elem(O,R,[H|T],[H|T2]):-
 	cambiar_elem(O,R,T,T2).
 
@@ -50,12 +50,14 @@ eliminar_elem(_, [], []).
 %Caso recursivo:
 %Si H (el elemento buscado) es el Head de la lista
 % no se copia a L, y seguimos procesando el Tail de la lista
-eliminar_elem(H, [H|T], L):- eliminar_elem(H, T, L).
+eliminar_elem(H, [H|T], L):- 
+	eliminar_elem(H, T, L).
 %Caso recursivo:
 %Si H, no es el Head de la lista (X)
 %Copiamos el Head de la lista a la lista de salida
 %y continuamos procesando el Tail de la lista
-eliminar_elem(H, [X|T], [X|T2]):- eliminar_elem(H, T, T2).
+eliminar_elem(H, [X|T], [X|T2]):- 
+	eliminar_elem(H, T, T2).
 
 
 
@@ -93,16 +95,16 @@ aplana_un_nivel([H|T],X):-
 
 
 %Delete all elements with a specific property in a property-value list
-%deleteAllElementsWithSameProperty(P,InputList,OutputList).
+%borraTodoElementoConIgualPropiedad(P,InputList,OutputList).
 %Example (p2,[p1=>v1,p2=>v2,p3=>v3,p2=>v4,p4=>v4],[p1=>v1,p3=>v3,p4=>v4])
 
-deleteAllElementsWithSameProperty(_,[],[]).
+borraTodoElementoConIgualPropiedad(_,[],[]).
 
-deleteAllElementsWithSameProperty(X,[X=>_|T],N) :-
-	deleteAllElementsWithSameProperty(X,T,N).
+borraTodoElementoConIgualPropiedad(X,[X=>_|T],N) :-
+	borraTodoElementoConIgualPropiedad(X,T,N).
 
-deleteAllElementsWithSameProperty(X,[H|T],[H|N]):-
-	deleteAllElementsWithSameProperty(X,T,N).
+borraTodoElementoConIgualPropiedad(X,[H|T],[H|N]):-
+	borraTodoElementoConIgualPropiedad(X,T,N).
 
 
 %Delete all elements with a specific negated property in a property-value list

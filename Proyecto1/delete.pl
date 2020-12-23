@@ -17,7 +17,7 @@
 
 rm_class_property(Class,Property,OriginalKB,NewKB) :-
 	cambiar_elem(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,NewProps,Rels,Objects),OriginalKB,NewKB),
-	deleteAllElementsWithSameProperty(Property,Props,Aux),
+	borraTodoElementoConIgualPropiedad(Property,Props,Aux),
 	eliminar_elem(not(Property),Aux,Aux2),
 	eliminar_elem(Property,Aux2,NewProps).
 
@@ -30,7 +30,7 @@ rm_class_relation(Class,not(Relation),OriginalKB,NewKB) :-
 
 rm_class_relation(Class,Relation,OriginalKB,NewKB) :-
 	cambiar_elem(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,Props,NewRels,Objects),OriginalKB,NewKB),
-	deleteAllElementsWithSameProperty(Relation,Rels,NewRels).
+	borraTodoElementoConIgualPropiedad(Relation,Rels,NewRels).
 
 
 %Remove an object property
@@ -39,7 +39,7 @@ rm_object_property(Object,Property,OriginalKB,NewKB) :-
 	cambiar_elem(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,Props,Rels,NewObjects),OriginalKB,NewKB),
 	verifica_elem([id=>Object,Properties,Relations],Objects),
 	cambiar_elem([id=>Object,Properties,Relations],[id=>Object,NewProperties,Relations],Objects,NewObjects),
-	deleteAllElementsWithSameProperty(Property,Properties,Aux),
+	borraTodoElementoConIgualPropiedad(Property,Properties,Aux),
 	eliminar_elem(not(Property),Aux,Aux2),
 	eliminar_elem(Property,Aux2,NewProperties).
 
@@ -56,7 +56,7 @@ rm_object_relation(Object,Relation,OriginalKB,NewKB) :-
 	cambiar_elem(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,Props,Rels,NewObjects),OriginalKB,NewKB),
 	verifica_elem([id=>Object,Properties,Relations],Objects),
 	cambiar_elem([id=>Object,Properties,Relations],[id=>Object,Properties,NewRelations],Objects,NewObjects),
-	deleteAllElementsWithSameProperty(Relation,Relations,NewRelations).
+	borraTodoElementoConIgualPropiedad(Relation,Relations,NewRelations).
 	
 
 %Remove an object
