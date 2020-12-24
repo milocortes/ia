@@ -80,10 +80,10 @@ there_is_class(Class,[_|T],Answer):-
 there_is_object(_,[],unknown).
 
 there_is_object(Object,[class(_,_,_,_,O)|_],no):-
-	isElement([id=>not(Object),_,_],O).
+	verifica_elem([id=>not(Object),_,_],O).
 
 there_is_object(Object,[class(_,_,_,_,O)|_],yes):-
-	isElement([id=>Object,_,_],O).
+	verifica_elem([id=>Object,_,_],O).
 
 there_is_object(Object,[_|T],Answer):-
 	there_is_object(Object,T,Answer).
@@ -151,29 +151,29 @@ concat_ancestors_properties([Ancestor|T],KB,[Properties|NewT]):-
 	properties_only_in_the_class(Ancestor,KB,Properties).
 
 cancel_repeated_property_values(X,Z):-
-	append_list_of_lists(X,Y),
+	aplana_un_nivel(X,Y),
 	delete_repeated_properties(Y,Z).
 
 delete_repeated_properties([],[]).
 
 delete_repeated_properties([P=>V|T],[P=>V|NewT]):-
-	deleteAllElementsWithSameProperty(P,T,L1),
-	deleteElement(not(P=>V),L1,L2),
+	borraTodoElementoConIgualPropiedad(P,T,L1),
+	eliminar_elem(not(P=>V),L1,L2),
 	delete_repeated_properties(L2,NewT).
 
 delete_repeated_properties([not(P=>V)|T],[not(P=>V)|NewT]):-
 	deleteAllElementsWithSameNegatedProperty(P,T,L1),
-	deleteElement(P=>V,L1,L2),
+	eliminar_elem(P=>V,L1,L2),
 	delete_repeated_properties(L2,NewT).
 
 delete_repeated_properties([not(H)|T],[not(H)|NewT]):-
-	deleteElement(not(H),T,L1),
-	deleteElement(H,L1,L2),
+	eliminar_elem(not(H),T,L1),
+	eliminar_elem(H,L1,L2),
 	delete_repeated_properties(L2,NewT).
 
 delete_repeated_properties([H|T],[H|NewT]):-
-	deleteElement(H,T,L1),
-	deleteElement(not(H),L1,L2),
+	eliminar_elem(H,T,L1),
+	eliminar_elem(not(H),L1,L2),
 	delete_repeated_properties(L2,NewT).
 
 
@@ -186,11 +186,11 @@ class_has_property(Class,Property,KB,Answer):-
 
 incomplete_information(_,[], unknown).
 
-incomplete_information(Atom, List, yes):- isElement(Atom,List).
+incomplete_information(Atom, List, yes):- verifica_elem(Atom,List).
 
-incomplete_information(not(Atom), List, no):- isElement(Atom,List).
+incomplete_information(not(Atom), List, no):- verifica_elem(Atom,List).
 
-incomplete_information(Atom, List, no):- isElement(not(Atom),List).
+incomplete_information(Atom, List, no):- verifica_elem(not(Atom),List).
 
 incomplete_information(_, _, unknown).
 
@@ -220,7 +220,7 @@ find_value(Attribute,[_|T],Value):-
 class_of_an_object(_,[],unknown):-!.
 
 class_of_an_object(Object,[class(C,_,_,_,O)|_],C):-
-	isElement([id=>Object,_,_],O).
+	verifica_elem([id=>Object,_,_],O).
 
 class_of_an_object(Object,[_|T],Class):-
 	class_of_an_object(Object,T,Class).
@@ -242,7 +242,7 @@ object_properties(_,_,unknown).
 properties_only_in_the_object(_,[],[]).
 
 properties_only_in_the_object(Object,[class(_,_,_,_,O)|_],Properties):-
-	isElement([id=>Object,Properties,_],O).
+	verifica_elem([id=>Object,Properties,_],O).
 
 properties_only_in_the_object(Object,[_|T],Properties):-
 	properties_only_in_the_object(Object,T,Properties).
@@ -343,7 +343,7 @@ object_relations(_,_,unknown).
 relations_only_in_the_object(_,[],[]).
 
 relations_only_in_the_object(Object,[class(_,_,_,_,O)|_],Relations):-
-	isElement([id=>Object,_,Relations],O).
+	verifica_elem([id=>Object,_,Relations],O).
 
 relations_only_in_the_object(Object,[_|T],Relations):-
 	relations_only_in_the_object(Object,T,Relations).
