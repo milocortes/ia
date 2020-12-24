@@ -118,3 +118,6 @@ deleteAllElementsWithSameNegatedProperty(X,[not(X=>_)|T],N):-
 
 deleteAllElementsWithSameNegatedProperty(X,[H|T],[H|N]):-
 	deleteAllElementsWithSameNegatedProperty(X,T,N).
+
+
+Pepe pecas pica papas en navidad
