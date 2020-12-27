@@ -53,15 +53,15 @@ atom_to_term(ATOM, TERM) :-
 pruebas :- 
     open_kb('KB.txt', KB),
     add_class(taco, food, KB, NewKB),
-	there_is_class(taco, KB, Answer),
+	existencia_clase(taco, KB, Answer),
 	write('Is taco in KB: '),
 	write(Answer),
 	write('\n'),
-	there_is_class(taco, NewKB, NewAnswer),
+	existencia_clase(taco, NewKB, NewAnswer),
 	write('Is taco in NewKB: '),
 	write(NewAnswer),
 	write('\n\n'),
-    class_extension(food, NewKB, Result),
+    extension_clase(food, NewKB, Result),
     write('KB: '),
 	write(KB),
 	write('\n\n'),
@@ -69,4 +69,9 @@ pruebas :-
 	write(NewKB),
 	write('\n\n'),
     write('Food class extension: '),
-    write(Result).
+    write(Result),
+	write('\n\n'),
+	write('Comestible class extension: '),
+	extension_clase(comestible, NewKB, Ans),
+	write(Ans).
+

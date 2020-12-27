@@ -1,7 +1,7 @@
-:- module(class_extension,[class_extension/3]).
+:- module(class_extension,[extension_clase/3]).
 :- use_module(consult_ops).
 
 %Class extension
-class_extension(Class,KB,Objects):-
-	objects_of_a_class(Class,KB,Objects).	
+extension_clase(C,KB,Objs):-
+	objetos_de_una_clase(C,KB,Objs).	
 
