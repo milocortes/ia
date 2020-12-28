@@ -54,85 +54,170 @@ there_is_object(Object,[_|T],Answer):-
 	there_is_object(Object,T,Answer).
 
 
-
-%Consult the mother of a class
+%Obtiene el nombre de la clase madre de una clase a partir de su nombre
+%Busca en una lista de clases (KB), una clase (Class)
+%y en cuanto la encuentra, regresa el nombre de la clase madre (Mother)
+%Caso base:
+%	La clase madre de una clase, dada una lista vacía de clases, debe responderse con 'no sé'
 mother_of_a_class(_,[],unknown).
-
+%Caso base:
+%	El nombre de la clase (Class) unifica con el nombre de la clase en el Head de la lista de clases
+%	Y se hace un binding de Mother con el nombre de la clase madre de la clase en el Head
 mother_of_a_class(Class,[class(Class,Mother,_,_,_)|_],Mother).
-
-mother_of_a_class(Class,[_|T],Mother):-
+%Caso recursivo:
+%	El nombre de la clase (Class) no unifica con el nombre de la clase en el Head de la lista de clases,
+%	Entonces se prosigue a seguir buscando en el Tail de la lista.
+mother_of_a_class(Class,[class(_,_,_,_,_)|T],Mother):-
 	mother_of_a_class(Class,T,Mother).
 
 
 
-%Consult the ancestors of a class
+%Obtiene los ancestros de la clase
+%	-Valida la existencia de la clase
+%	-Si la clase existe, se obtiene la lista de todos sus ancestros
 class_ancestors(Class,KB,ClassAncestors):-
 	existencia_clase(Class,KB,yes),
 	list_of_ancestors(Class,KB,ClassAncestors).
-
+%Si el predicado anterior falló, claramente habrá sido porque no existe la clase en su forma 
+%afirmativa, por lo tanto se busca si no existe tampoco en su forma negativa para responder no sé y evitar la negación por falla
+%Cabe recalcar que si éste predicado falla (y puesto que el anterior también fallo, para que se haya tenido que evaluar éste)
+%querrá decir que la clase se encuentra en su forma negada, por lo tanto una evaluación falsa implica que la clase se encuentre
+%en su forma negada.
 class_ancestors(Class,KB,unknown):-
 	existencia_clase(Class,KB,unknown).
 
+%Obtiene una lista de todos los ancestros de una clase
+%Caso base:
+%	La clase top no tiene ancestros
 list_of_ancestors(top,_,[]).
-
+%Caso recursivo:
+%	Obtenemos el nombre de la clase madre (Mother) de la clase (Class)
+%	Proseguimos a buscar a los ancestros de la clase madre recursivamente
+%	Hasta que finalmente se llegue al caso base y se resuelva cada llamada recursiva,
+%	llenando, con cada resolución, la lista de ancestros, haciendo así el binding de la lista
+%	final de ancestros (Ancestors) en la primera evaluación del predicado
 list_of_ancestors(Class,KB,Ancestors):-
 	mother_of_a_class(Class,KB,Mother),
-	append([Mother],GrandParents,Ancestors),
-	list_of_ancestors(Mother,KB,GrandParents).
+	list_of_ancestors(Mother,KB,GrandParents),
+	append([Mother],GrandParents,Ancestors).
 
 
 
-%Consult the properties of a class
+%Obtiene las propiedades de una clase
+%	Si la clase que se busca es top, únicamente se obtienen las 
+%	propiedades que tiene directamente top
 class_properties(top,KB,Properties):-
 	properties_only_in_the_class(top,KB,Properties).
-
+%	Para cualquier clase dentro de la jerarquía que sea distinta de top
+%	- Se valida la existencia de la clase.
+%	- Se obtienen las propiedades directamente dentro de la clase
+%	- Se obtienen los ancestros de la clase
+%	- Se concatenan todas las propiedades de cada ancestro para obtener todas las propiedades
+%	  asociadas a la clase
+%	- Elimina todas las propiedades repetidas que se hayan obtenido del predicado anterior
+%	  y aplica el principio de especificidad para eliminar propiedades contradictorias de niveles
+%	  más abstractos de la jerarquía
 class_properties(Class,KB,Properties):-
 	existencia_clase(Class,KB,yes),
 	properties_only_in_the_class(Class,KB,ClassProperties),
-	append([ClassProperties],AncestorsProperties,AllProperties),
+	class_ancestors(Class,KB,Ancestors),
 	concat_ancestors_properties(Ancestors,KB,AncestorsProperties),
-	list_of_ancestors(Class,KB,Ancestors),
+	append([ClassProperties],AncestorsProperties,AllProperties),
 	cancel_repeated_property_values(AllProperties,Properties).
 
 class_properties(Class,KB,unknown):-
 	existencia_clase(Class,KB,unknown).
 
-
+%Obtiene las propiedades de una clase especifica
+%Caso base:
+%	Las propiedades de una clase en una lista vacía
+%	son una lista vacía
 properties_only_in_the_class(_,[],[]).
-
+%Caso base:
+%	La clase con el nombre de clase para la cuál se buscan sus propiedades (Class)
+%	se encuentra en el Head de la lista (se unifican) y se hace el binding de Properties
 properties_only_in_the_class(Class,[class(Class,_,Properties,_,_)|_],Properties).
-
-properties_only_in_the_class(Class,[_|T],Properties):-
+%Caso recursivo:
+%	La clase en el Head no es la que se busca, se sigue evaluando el Tail de la lista.
+properties_only_in_the_class(Class,[class(_,_,_,_,_)|T],Properties):-
 	properties_only_in_the_class(Class,T,Properties).
 
-
+%Concatena las propiedades de varias clases
+%Caso base: 
+%Las propiedades de una lista de nombres de clase vacía son una lista vacía
 concat_ancestors_properties([],_,[]).
-
-concat_ancestors_properties([Ancestor|T],KB,[Properties|NewT]):-
-	concat_ancestors_properties(T,KB,NewT),
+%Caso recursivo:
+%Por cada clase dentro de la lista de obtenemos sus propiedades,
+%Notese que T2 siempre estará vacía en cada llamada recursiva
+%y en el caso base, se llenara el Head de la lista de propiedades
+%con lo cual se resolverán todas las llamadas recursivas anteriores
+%para finalmente obtener, en la primera evaluación del predicado
+%la lista final de propiedades (Properties).
+concat_ancestors_properties([Ancestor|T],KB,[Properties|T2]):-
+	concat_ancestors_properties(T,KB,T2),
 	properties_only_in_the_class(Ancestor,KB,Properties).
 
+%Elimina propiedades duplicadas dentro de una lista de propiedades
+%Y elimina complementos lógicos de una propiedad despues de una primera ocurrencia,
+%esto porque se espera una lista de propiedades de especificidad descendiente.
+%	- Aplana la lista, es decir deposita todos los elementos en una lista anidada en una 
+%     lista unidimensional, este predicado espera una lista anidada de propiedades.
+%	- Con la obtención de la lista de propiedades aplanada, se procecede a 
+%	  efectuar lo que se menciona en la descripción de este predicado.
 cancel_repeated_property_values(X,Z):-
-	aplana_un_nivel(X,Y),
+	flatten(X, Y),
 	delete_repeated_properties(Y,Z).
 
+%Elimina propiedades duplicadas dentro de una lista de propiedades
+%Y aplica el principio de especificidad tomando en cuenta que la lista 
+%está ordenada descendientemente respecto a especificidad de las propiedades
+%Caso base:
+%	Borrar duplicados y complementos lógicos de propiedades menos específicas
+%	en una lista vacía de propiedades, es una lista vacía de propiedades
 delete_repeated_properties([],[]).
-
+%Caso recursivo:
+%	El elemento en el Head de la lista es un par propiedad-valor.
+%		- De nuevo, como se asume que la lista está ordenada por especificidad
+%		  descendiente, eliminamos toda propiedad igual a la que tenemos en el Head
+%		  del Tail de la lista
+%		- También eliminamos toda negación de la propiedad-valor que tenemos en el Head
+%		  del Tail de la lista
+%		- Continuamos procesando el Tail de la lista
+%	Nótese que se efectúa la concatencación de cada par cuando se resuelven las llamadas
+%	recursivas, para finalmente hacer el binding a la lista de salida
 delete_repeated_properties([P=>V|T],[P=>V|NewT]):-
-	borraTodoElementoConIgualPropiedad(P,T,L1),
+	eliminar_elem(P=>_,T,L1),
 	eliminar_elem(not(P=>V),L1,L2),
 	delete_repeated_properties(L2,NewT).
-
+%Caso recursivo:
+%	El elemento en el Head de la lista es un par propiedad-valor negado.
+%		- Eliminamos toda propiedad igual a la que tenemos en el Head,
+%		  (en este caso el negado de la propiedad) del Tail de la lista
+%		- También eliminamos toda negación de la propiedad-valor que tenemos en el Head
+%		  del Tail de la lista (En este caso el negado de la propiedad-valor, es la propiedad-valor)
+%		- Continuamos procesando el Tail de la lista
 delete_repeated_properties([not(P=>V)|T],[not(P=>V)|NewT]):-
-	deleteAllElementsWithSameNegatedProperty(P,T,L1),
+	eliminar_elem(not(P=>_),T,L1),
 	eliminar_elem(P=>V,L1,L2),
 	delete_repeated_properties(L2,NewT).
-
+%Caso recursivo:
+%	El elemento en el Head de la lista es una propiedad atómica negada.
+%		- Eliminamos toda propiedad negada igual a la que tenemos en el Head,
+%		  del Tail de la lista
+%		- También eliminamos toda propiedad atómica que tenemos en el Head,
+%		  del Tail de la lista
+%		- Continuamos procesando el Tail de la lista
 delete_repeated_properties([not(H)|T],[not(H)|NewT]):-
 	eliminar_elem(not(H),T,L1),
 	eliminar_elem(H,L1,L2),
 	delete_repeated_properties(L2,NewT).
-
+%Caso recursivo:
+%	El elemento en el Head de la lista es un propiedad atómica.
+%		- Eliminamos toda propiedad igual a la que tenemos en el Head
+%		  del Tail de la lista
+%		- También eliminamos toda negación de la propiedad atómica que tenemos en el Head,
+%		  del Tail de la lista
+%		- Continuamos procesando el Tail de la lista
 delete_repeated_properties([H|T],[H|NewT]):-
 	eliminar_elem(H,T,L1),
 	eliminar_elem(not(H),L1,L2),
@@ -175,18 +260,32 @@ find_value(Attribute,[_|T],Value):-
 
 
 
-%Shows the class of an object
+%Obtiene la clase de un objeto dado su nombre
+%Caso base:
+%	La clase de un objeto es desconocida si la KB
+%	es vacía, evitando la negación por falla
 class_of_an_object(_,[],unknown):-!.
-
+%Caso base:
+%	El nombre del individuo (Object), se encuentra
+%	dentro de la lista de los individuos (O) de la clase (C)
+%	en el Head de la lista de clases de la KB
+%	por lo tanto C es la clase del individuo
 class_of_an_object(Object,[class(C,_,_,_,O)|_],C):-
 	verifica_elem([id=>Object,_,_],O).
-
-class_of_an_object(Object,[_|T],Class):-
+%Caso recursivo:
+%	El nombre del individuo (Object), no se encuentra
+%	dentro de la lista de los individuos de la clase
+%	(El caso anterior fue falso)
+%	Por lo tanto, no nos importan los parámetros
+%	de la clase en el Head de la lista y continuamos
+%	procesando el Tail (T) de la lista.
+class_of_an_object(Object,[class(_,_,_,_,_)|T],Class):-
 	class_of_an_object(Object,T,Class).
 
 
 
-%List all the properties of an object
+%Regresa una lista de propiedades de un objeto tomando en cuenta
+%la cerradura de la relación de herencia y el principio de especificidad.
 object_properties(Object,KB,AllProperties):-
 	there_is_object(Object,KB,yes),
 	properties_only_in_the_object(Object,KB,ObjectProperties),
@@ -197,12 +296,26 @@ object_properties(Object,KB,AllProperties):-
 
 object_properties(_,_,unknown).
 
+%Regresa las propiedades unicamente dentro del objeto con un id específico
+%Nota: 
+%	Falta considerar cuando el objeto tenga una lista de ids (varios nombres)
+%	y cuando sea un objeto anónimo
+%Caso base: 
+%	Las propiedades de un objeto, dada una lista de clases vacía, 
+%   sin importar el objeto, son una lista vacía
 properties_only_in_the_object(_,[],[]).
-
+%Caso base:
+%	La lista de propiedades (Properties) de un objeto (de nombre Object) 
+%   será la lista de propiedades del individuo que a su vez se encuentra dentro de la lista
+%   de individuos (O) de una clase cualquiera en el Head de la KB, si efectivamente
+%	existe un individuo con ese nombre en la lista de individuos de la clase.
 properties_only_in_the_object(Object,[class(_,_,_,_,O)|_],Properties):-
 	verifica_elem([id=>Object,Properties,_],O).
-
-properties_only_in_the_object(Object,[_|T],Properties):-
+%Caso recursivo:
+%	En caso de fallo al encontrar Object en la lista de individuos,
+%   sin importarnos ninguno de los campos de la clase en el Head,
+%	proseguimos a seguir procesando el Tail de la KB
+properties_only_in_the_object(Object,[class(_,_,_,_,_)|T],Properties):-
 	properties_only_in_the_object(Object,T,Properties).
 	
 
@@ -358,7 +471,7 @@ hijos_clases([C|T],KB,Primos):-
 
 
 %Regresa los ids de objetos de una clase respetando la cerradura de la relación de herencia.
-%Los ids de objetos de una clase existen si dicha clase existe,
+%Los ids de objetos de una clase pueden existir si dicha clase existe,
 %si la clase (C) existe, obtenemos los objetos que pertenecen a ésta (Objetos_Clase),
 %obtenemos todas las clases descendientes de C (Descendientes) y de esas clases a su vez obtenemos
 %todos los objetos que pertenecen a ellas (Objetos_Descendientes)

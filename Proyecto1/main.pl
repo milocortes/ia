@@ -73,5 +73,16 @@ pruebas :-
 	write('\n\n'),
 	write('Comestible class extension: '),
 	extension_clase(comestible, NewKB, Ans),
-	write(Ans).
-
+	write(Ans),
+	write('\n\n'),
+	write('d1 properties: '),
+	propiedades_individuo(d1, NewKB, Props),
+	write(Props),
+	write('\n\n'),
+	write('s1 properties: '),
+	propiedades_individuo(s1, NewKB, Props2),
+	write(Props2),
+	nl,
+	write('v1 properties: '),
+	propiedades_individuo(v1, NewKB, Props3),
+	write(Props3).
