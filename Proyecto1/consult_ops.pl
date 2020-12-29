@@ -5,12 +5,14 @@
 						eliminate_null_property/2,
 						object_relation_value/4,
 						existencia_clase/3,
-						there_is_object/3,
-						class_of_an_object/3,
+						existencia_objeto/3,
+						clase_de_objeto/3,
 						class_ancestors/3,
-						object_properties/3,
+						propiedades_de_un_objeto/3,
 						expand_classes_to_objects/3,
-						object_relations/3]).
+						object_relations/3,
+						propiedades_de_una_clase/3,
+						propiedades_ancestros/3]).
 :- use_module(utils).
 
 
@@ -42,16 +44,16 @@ existencia_clase(Class,[class(_,_,_,_,_)|T],Answer):-
 
 
 %Verify if an object exists
-there_is_object(_,[],unknown).
+existencia_objeto(_,[],unknown).
 
-there_is_object(Object,[class(_,_,_,_,O)|_],no):-
+existencia_objeto(Object,[class(_,_,_,_,O)|_],no):-
 	verifica_elem([id=>not(Object),_,_],O).
 
-there_is_object(Object,[class(_,_,_,_,O)|_],yes):-
+existencia_objeto(Object,[class(_,_,_,_,O)|_],yes):-
 	verifica_elem([id=>Object,_,_],O).
 
-there_is_object(Object,[_|T],Answer):-
-	there_is_object(Object,T,Answer).
+existencia_objeto(Object,[_|T],Answer):-
+	existencia_objeto(Object,T,Answer).
 
 
 %Obtiene el nombre de la clase madre de una clase a partir de su nombre
@@ -70,7 +72,19 @@ mother_of_a_class(Class,[class(Class,Mother,_,_,_)|_],Mother).
 mother_of_a_class(Class,[class(_,_,_,_,_)|T],Mother):-
 	mother_of_a_class(Class,T,Mother).
 
+propiedades_ancestros(C, KB, Props):-
+	existencia_clase(C,KB,yes),
+	lista_props_ancestros(C,KB,Props).	
 
+propiedades_ancestros(C,KB,unknown):-
+	existencia_clase(C,KB,unknown).
+
+lista_props_ancestros(none,_,[]).
+
+lista_props_ancestros(C,KB,[Properties|T]):-
+	mother_of_a_class(C,KB,M),
+	lista_props_ancestros(M,KB,T),
+	propiedades_clase(M,KB,Properties).
 
 %Obtiene los ancestros de la clase
 %	-Valida la existencia de la clase
@@ -101,13 +115,11 @@ list_of_ancestors(Class,KB,Ancestors):-
 	list_of_ancestors(Mother,KB,GrandParents),
 	append([Mother],GrandParents,Ancestors).
 
-
-
 %Obtiene las propiedades de una clase
 %	Si la clase que se busca es top, únicamente se obtienen las 
 %	propiedades que tiene directamente top
-class_properties(top,KB,Properties):-
-	properties_only_in_the_class(top,KB,Properties).
+propiedades_de_una_clase(top,KB,Properties):-
+	propiedades_clase(top,KB,Properties).
 %	Para cualquier clase dentro de la jerarquía que sea distinta de top
 %	- Se valida la existencia de la clase.
 %	- Se obtienen las propiedades directamente dentro de la clase
@@ -117,30 +129,29 @@ class_properties(top,KB,Properties):-
 %	- Elimina todas las propiedades repetidas que se hayan obtenido del predicado anterior
 %	  y aplica el principio de especificidad para eliminar propiedades contradictorias de niveles
 %	  más abstractos de la jerarquía
-class_properties(Class,KB,Properties):-
-	existencia_clase(Class,KB,yes),
-	properties_only_in_the_class(Class,KB,ClassProperties),
-	class_ancestors(Class,KB,Ancestors),
-	concat_ancestors_properties(Ancestors,KB,AncestorsProperties),
-	append([ClassProperties],AncestorsProperties,AllProperties),
-	cancel_repeated_property_values(AllProperties,Properties).
+propiedades_de_una_clase(C,KB,Props):-
+	existencia_clase(C,KB,yes),
+	propiedades_clase(C, KB, CProps),
+	propiedades_ancestros(C, KB, AncestrosProps),
+	append(CProps, AncestrosProps, AllProperties),
+	cancel_repeated_property_values(AllProperties,Props).
 
-class_properties(Class,KB,unknown):-
+propiedades_de_una_clase(Class,KB,unknown):-
 	existencia_clase(Class,KB,unknown).
 
 %Obtiene las propiedades de una clase especifica
 %Caso base:
 %	Las propiedades de una clase en una lista vacía
 %	son una lista vacía
-properties_only_in_the_class(_,[],[]).
+propiedades_clase(_,[],[]).
 %Caso base:
 %	La clase con el nombre de clase para la cuál se buscan sus propiedades (Class)
 %	se encuentra en el Head de la lista (se unifican) y se hace el binding de Properties
-properties_only_in_the_class(Class,[class(Class,_,Properties,_,_)|_],Properties).
+propiedades_clase(Class,[class(Class,_,Properties,_,_)|_],Properties).
 %Caso recursivo:
 %	La clase en el Head no es la que se busca, se sigue evaluando el Tail de la lista.
-properties_only_in_the_class(Class,[class(_,_,_,_,_)|T],Properties):-
-	properties_only_in_the_class(Class,T,Properties).
+propiedades_clase(Class,[class(_,_,_,_,_)|T],Properties):-
+	propiedades_clase(Class,T,Properties).
 
 %Concatena las propiedades de varias clases
 %Caso base: 
@@ -155,7 +166,7 @@ concat_ancestors_properties([],_,[]).
 %la lista final de propiedades (Properties).
 concat_ancestors_properties([Ancestor|T],KB,[Properties|T2]):-
 	concat_ancestors_properties(T,KB,T2),
-	properties_only_in_the_class(Ancestor,KB,Properties).
+	propiedades_clase(Ancestor,KB,Properties).
 
 %Elimina propiedades duplicadas dentro de una lista de propiedades
 %Y elimina complementos lógicos de una propiedad despues de una primera ocurrencia,
@@ -227,7 +238,7 @@ delete_repeated_properties([H|T],[H|NewT]):-
 
 %Verify if a class has a specific property
 class_has_property(Class,Property,KB,Answer):-
-	class_properties(Class,KB,Properties),
+	propiedades_de_una_clase(Class,KB,Properties),
 	incomplete_information(Property,Properties,Answer).
 
 incomplete_information(_,[], unknown).
@@ -244,7 +255,7 @@ incomplete_information(_, _, unknown).
 
 %Return the value of a class property
 class_property_value(Class,Property,KB,Value):-
-	class_properties(Class,KB,ClassProperties),
+	propiedades_de_una_clase(Class,KB,ClassProperties),
 	find_value(Property,ClassProperties,Value).
 
 find_value(_,[],unknown).
@@ -264,14 +275,14 @@ find_value(Attribute,[_|T],Value):-
 %Caso base:
 %	La clase de un objeto es desconocida si la KB
 %	es vacía, evitando la negación por falla
-class_of_an_object(_,[],unknown):-!.
+clase_de_objeto(_,[],unknown):-!.
 %Caso base:
 %	El nombre del individuo (Object), se encuentra
 %	dentro de la lista de los individuos (O) de la clase (C)
 %	en el Head de la lista de clases de la KB
 %	por lo tanto C es la clase del individuo
-class_of_an_object(Object,[class(C,_,_,_,O)|_],C):-
-	verifica_elem([id=>Object,_,_],O).
+clase_de_objeto(Object,[class(C,_,_,_,O)|_],C):-
+	member([id=>Object,_,_],O).
 %Caso recursivo:
 %	El nombre del individuo (Object), no se encuentra
 %	dentro de la lista de los individuos de la clase
@@ -279,22 +290,21 @@ class_of_an_object(Object,[class(C,_,_,_,O)|_],C):-
 %	Por lo tanto, no nos importan los parámetros
 %	de la clase en el Head de la lista y continuamos
 %	procesando el Tail (T) de la lista.
-class_of_an_object(Object,[class(_,_,_,_,_)|T],Class):-
-	class_of_an_object(Object,T,Class).
-
+clase_de_objeto(Object,[class(_,_,_,_,_)|T],Class):-
+	clase_de_objeto(Object,T,Class).
 
 
 %Regresa una lista de propiedades de un objeto tomando en cuenta
 %la cerradura de la relación de herencia y el principio de especificidad.
-object_properties(Object,KB,AllProperties):-
-	there_is_object(Object,KB,yes),
-	properties_only_in_the_object(Object,KB,ObjectProperties),
-	class_of_an_object(Object,KB,Class),
-	class_properties(Class,KB,ClassProperties),
+propiedades_de_un_objeto(Object,KB,AllProperties):-
+	existencia_objeto(Object,KB,yes),
+	propiedades_objeto(Object,KB,ObjectProperties),
+	clase_de_objeto(Object,KB,Class),
+	propiedades_de_una_clase(Class,KB,ClassProperties),
 	append(ObjectProperties,ClassProperties,Temp),
 	delete_repeated_properties(Temp,AllProperties).
 
-object_properties(_,_,unknown).
+propiedades_de_un_objeto(_,_,unknown).
 
 %Regresa las propiedades unicamente dentro del objeto con un id específico
 %Nota: 
@@ -303,27 +313,27 @@ object_properties(_,_,unknown).
 %Caso base: 
 %	Las propiedades de un objeto, dada una lista de clases vacía, 
 %   sin importar el objeto, son una lista vacía
-properties_only_in_the_object(_,[],[]).
+propiedades_objeto(_,[],[]).
 %Caso base:
 %	La lista de propiedades (Properties) de un objeto (de nombre Object) 
 %   será la lista de propiedades del individuo que a su vez se encuentra dentro de la lista
 %   de individuos (O) de una clase cualquiera en el Head de la KB, si efectivamente
 %	existe un individuo con ese nombre en la lista de individuos de la clase.
-properties_only_in_the_object(Object,[class(_,_,_,_,O)|_],Properties):-
-	verifica_elem([id=>Object,Properties,_],O).
+propiedades_objeto(Object,[class(_,_,_,_,O)|_],Properties):-
+	member([id=>Object,Properties,_],O).
 %Caso recursivo:
 %	En caso de fallo al encontrar Object en la lista de individuos,
 %   sin importarnos ninguno de los campos de la clase en el Head,
 %	proseguimos a seguir procesando el Tail de la KB
-properties_only_in_the_object(Object,[class(_,_,_,_,_)|T],Properties):-
-	properties_only_in_the_object(Object,T,Properties).
+propiedades_objeto(Object,[class(_,_,_,_,_)|T],Properties):-
+	propiedades_objeto(Object,T,Properties).
 	
 
 
 %Return the value of an object property
 object_property_value(Object,Property,KB,Value):-
-	there_is_object(Object,KB,yes),
-	object_properties(Object,KB,Properties),
+	existencia_objeto(Object,KB,yes),
+	propiedades_de_un_objeto(Object,KB,Properties),
 	find_value(Property,Properties,Value).
 
 object_property_value(_,_,_,unknown).
@@ -396,9 +406,9 @@ find_value_positive_relation(Attribute,[_|T],Value):-
 
 %List all the relations of an object
 object_relations(Object,KB,AllRelations):-
-	there_is_object(Object,KB,yes),
+	existencia_objeto(Object,KB,yes),
 	relations_only_in_the_object(Object,KB,ObjectRelations),
-	class_of_an_object(Object,KB,Class),
+	clase_de_objeto(Object,KB,Class),
 	class_relations(Class,KB,ClassRelations),
 	append([ObjectRelations],[ClassRelations],Temp),
 	cancel_repeated_property_values(Temp,AllRelations).
@@ -418,7 +428,7 @@ relations_only_in_the_object(Object,[_|T],Relations):-
 
 %Return the value of an object relation
 object_relation_value(Object,Relation,KB,Value):-
-	there_is_object(Object,KB,yes),
+	existencia_objeto(Object,KB,yes),
 	object_relations(Object,KB,Relations),
 	find_value_relation(Relation,Relations,Value).
 
