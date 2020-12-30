@@ -4,7 +4,7 @@
 % Relations of individual
 
 relations_of_individual(Object,KB,ExpandedRelations):-
-	there_is_object(Object,KB,yes),
+	existencia_objeto(Object,KB,yes),
 	object_relations(Object,KB,Relations),
 	expand_classes_to_objects(Relations,ExpandedRelations,KB).
 
