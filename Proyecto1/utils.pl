@@ -1,73 +1,110 @@
-:- module(utils,  [changeElement/4, 
-                  deleteElement/3, 
-                  isElement/2, 
-                  append_list_of_lists/2,
-                  deleteAllElementsWithSameProperty/3,
+:- module(utils,  [cambiar_elem/4, 
+                  eliminar_elem/3, 
+                  verifica_elem/2, 
+                  aplana_un_nivel/2,
+                  borraTodoElementoConIgualPropiedad/3,
                   deleteAllElementsWithSameNegatedProperty/3,
                   op(800,xfx,'=>')]).
+
+
+				
 %----------------------------------------
 % Administration of lists
 %----------------------------------------
 
 
-%Change all ocurrences of an element X in a list for the value Y
-%changeElement(X,Y,InputList,OutputList).
-%Example (p,b,[p,a,p,a,y,a],[p,b,p,b,y,b])
+%Cambiar las ocurrencias de un elemento O por un elemento R
+%e.g. cambiar_elem(a,b,[b,a,n,a,n,a],A).
+% A = [b,b,n,b,n,b]
 
-changeElement(_,_,[],[]).
+%Caso base: 
+%si la lista es vacía,
+%cambiar cualquier cosa con cualquier cosa
+%sigue dando una lista vacía
+cambiar_elem(_,_,[],[]).
 
-changeElement(X,Y,[X|T],[Y|N]):-
-	changeElement(X,Y,T,N).
+%Caso recursivo:
+%Si el Head de la lista es el mismo
+%que el elemento O (el elemento a remplazar)
+%se reemplaza por R, y continuamos procesando el Tail
+cambiar_elem(O,R,[O|T],[R|T2]):-
+	cambiar_elem(O,R,T,T2).
 
-changeElement(X,Y,[H|T],[H|N]):-
-	changeElement(X,Y,T,N).
-
-
-%Delete all ocurrences of an element X in a list
-%deleteElement(X,InputList,OutputList).
-%Example (a,[p,a,p,a,y,a],[p,p,y])
-
-deleteElement(_,[],[]).
-
-deleteElement(X,[X|T],N):-
-	deleteElement(X,T,N).
-
-deleteElement(X,[H|T],[H|N]):-
-	deleteElement(X,T,N),
-	X\=H.
+%Caso recursivo:
+%Si el Head de la lista no es el mismo
+%que e+ontinuamos procesando el Tail
+cambiar_elem(O,R,[H|T],[H|T2]):-
+	cambiar_elem(O,R,T,T2).
 
 
+%Elimina todas las apariciones de un elemento en una lista
+%e.g.
+%eliminar_elem(a, [b,a,n,a,n,a], A).
+%A = [b, n, n] .
 
-%Verify if an element X is in a list 
-%isElement(X,List)
-%Example (n,[b,a,n,a,n,a])
+%Caso base: 
+%La lista esta vacia,
+%eliminar cualquier cosa de una lista vacía
+%sigue dando una lista vacía
+eliminar_elem(_, [], []).
+%Caso recursivo:
+%Si H (el elemento buscado) es el Head de la lista
+% no se copia a L, y seguimos procesando el Tail de la lista
+eliminar_elem(H, [H|T], L):- 
+	eliminar_elem(H, T, L).
+%Caso recursivo:
+%Si H, no es el Head de la lista (X)
+%Copiamos el Head de la lista a la lista de salida
+%y continuamos procesando el Tail de la lista
+eliminar_elem(H, [X|T], [X|T2]):- 
+	eliminar_elem(H, T, T2).
 
-isElement(X,[X|_]).
-isElement(X,[_|T]):-
-	isElement(X,T).
 
 
-%Convert in a single list a list of lists
-%Example ([[a],[b,c],[],[d]],[a,b,c,d]).
+%Verfica si un elemento está en la lista 
+%e.g.
+%verifica_elem(a, [b,a,n,a,n,a]).               
+%true.
 
-append_list_of_lists([],[]).
+%Caso base:
+%El elemento buscado (X), es el mismo que 
+%el Head de la lista, por lo tanto ya terminé, el predicado es verdadero
+verifica_elem(X,[X|_]).
+%El elemento buscado, no es el mismo que el Head de la lista
+%continuamos buscando en el Tail de la lista
+verifica_elem(X,[_|T]):-
+	verifica_elem(X,T).
 
-append_list_of_lists([H|T],X):-
-	append(H,TList,X),
-	append_list_of_lists(T,TList).
+
+%Aplana una lista de listas a un lista
+%e.g.
+%aplana_un_nivel([[b],[a,n],[a,n,[a]]],A).      
+%A = [b, a, n, a, n, [a]].
+%Caso base:
+%Si aplanamos una lista vacía, el resultado seguirá siendo una lista vacía
+aplana_un_nivel([],[]).
+%Caso recursivo:
+%Si la lista no es vacía, concatenamos al Head de la lista una T2,
+%guardamos el resultado en la salida (X),
+%y continuamos procesando el Tail de la lista recursivamente, tomando a T2 como la nueva salida
+%Nota: no es un append, es un concatenation
+%https://www.swi-prolog.org/pldoc/man?predicate=append/3
+aplana_un_nivel([H|T],X):-
+	append(H,T2,X),
+	aplana_un_nivel(T,T2).
 
 
 %Delete all elements with a specific property in a property-value list
-%deleteAllElementsWithSameProperty(P,InputList,OutputList).
+%borraTodoElementoConIgualPropiedad(P,InputList,OutputList).
 %Example (p2,[p1=>v1,p2=>v2,p3=>v3,p2=>v4,p4=>v4],[p1=>v1,p3=>v3,p4=>v4])
 
-deleteAllElementsWithSameProperty(_,[],[]).
+borraTodoElementoConIgualPropiedad(_,[],[]).
 
-deleteAllElementsWithSameProperty(X,[X=>_|T],N) :-
-	deleteAllElementsWithSameProperty(X,T,N).
+borraTodoElementoConIgualPropiedad(X,[X=>_|T],N) :-
+	borraTodoElementoConIgualPropiedad(X,T,N).
 
-deleteAllElementsWithSameProperty(X,[H|T],[H|N]):-
-	deleteAllElementsWithSameProperty(X,T,N).
+borraTodoElementoConIgualPropiedad(X,[H|T],[H|N]):-
+	borraTodoElementoConIgualPropiedad(X,T,N).
 
 
 %Delete all elements with a specific negated property in a property-value list
