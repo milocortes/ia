@@ -1,5 +1,8 @@
 :- module(consult_ops, [objetos_de_una_clase/3,
 						objetos_clase_herencia/3,
+						mapea_lista_objetos_propiedades/3,
+						filtra_obj_props/4,
+						mapea_todo_objeto_propiedades/2,
 						nombre_objetos_clase_herencia/3,
 						objetos_clase/3,
 						filter_objects_with_property/4,
@@ -132,14 +135,10 @@ list_of_ancestors(Class,KB,Ancestors):-
 	append([Mother],GrandParents,Ancestors).
 
 %Obtiene las propiedades de una clase
-%	Si la clase que se busca es top, únicamente se obtienen las 
-%	propiedades que tiene directamente top
-%propiedades_de_una_clase(top,KB,Properties):-
-	%propiedades_clase(top,KB,Properties).
 %	Para cualquier clase dentro de la jerarquía que sea distinta de top
 %	- Se valida la existencia de la clase.
 %	- Se obtienen las propiedades directamente dentro de la clase
-%	- Se obtienen los ancestros de la clase
+%	- Se obtienen las propiedades de las clases ancestros
 %	- Se concatenan todas las propiedades de cada ancestro para obtener todas las propiedades
 %	  asociadas a la clase
 %	- Elimina todas las propiedades repetidas que se hayan obtenido del predicado anterior
@@ -163,11 +162,11 @@ propiedades_clase(_,[],[]).
 %Caso base:
 %	La clase con el nombre de clase para la cuál se buscan sus propiedades (Class)
 %	se encuentra en el Head de la lista (se unifican) y se hace el binding de Properties
-propiedades_clase(Class,[class(Class,_,Properties,_,_)|_],Properties).
+propiedades_clase(C,[class(C,_,Props,_,_)|_],Props).
 %Caso recursivo:
 %	La clase en el Head no es la que se busca, se sigue evaluando el Tail de la lista.
-propiedades_clase(Class,[class(_,_,_,_,_)|T],Properties):-
-	propiedades_clase(Class,T,Properties).
+propiedades_clase(C,[class(_,_,_,_,_)|T],Props):-
+	propiedades_clase(C,T,Props).
 
 %Concatena las propiedades de varias clases
 %Caso base: 
@@ -712,3 +711,56 @@ filter_objects_with_property(_,_,[],[]).
 filter_objects_with_property(KB,Property,[H|T],[H:Value|NewT]):-
 	object_property_value(H,Property,KB,Value),
 	filter_objects_with_property(KB,Property,T,NewT).
+
+mapea_todo_objeto_propiedades(KB, Objs_Props_Map):-
+	nombre_objetos_clase_herencia(top,KB,TodoObjeto),
+	mapea_lista_objetos_propiedades(TodoObjeto, KB, Objs_Props_Map).
+
+mapea_lista_objetos_propiedades([],_,[]).
+
+mapea_lista_objetos_propiedades([Obj|T], KB, [Obj_Prop_Map|T2]):-
+	extrae_obj_props(Obj, KB, Obj_Prop_Map),
+	mapea_lista_objetos_propiedades(T, KB, T2).
+
+extrae_obj_props(Obj, KB, [Obj, Props]):-
+	propiedades_de_un_objeto(Obj, KB, Props).
+
+
+filtra_obj_props([],_,_,[]).
+
+%Verifica propiedad atómica
+filtra_obj_props([[Obj, Props]|T], Prop, KB, [Obj|T2]):-
+	member(Prop, Props),
+	filtra_obj_props(T, Prop, KB, T2).
+
+%Verifica propiedad en forma atributo-valor
+filtra_obj_props([[Obj, Props]|T], Prop, KB, [Obj:Valor|T2]):-
+	member(Prop=>_, Props),
+	obtiene_valor(Prop, Props, Valor),
+	filtra_obj_props(T, Prop, KB, T2).
+
+%Verifica propiedad en forma not(atributo-valor)
+filtra_obj_props([[Obj, Props]|T], Prop, KB, [Obj:Valor|T2]):-
+	member(not(Prop=>_), Props),
+	obtiene_valor(Prop, Props, Valor),
+	filtra_obj_props(T, Prop, KB, T2).
+
+filtra_obj_props([_|T], Prop, KB, Objs):-
+	filtra_obj_props(T, Prop, KB, Objs).
+
+
+verifica_miembro_props(Prop, Props):-
+	member(Prop, Props).
+
+verifica_miembro_props(Prop, Props):-
+	member(Prop=>_, Props).
+
+
+obtiene_valor(_,[],_):-false.
+
+obtiene_valor(Prop,[Prop=>Value|_],Value).
+
+obtiene_valor(Prop,[not(Prop=>Value)|_],Value).
+
+obtiene_valor(Prop,[_|T],Value):-
+	obtiene_valor(Prop,T,Value).
