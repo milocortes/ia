@@ -98,7 +98,9 @@ rm_class(Class,OriginalKB,NewKB) :-
 	eliminar_elem(class(Class,Mother,_,_,_),OriginalKB,TemporalKB),
 	changeMother(Class,Mother,TemporalKB,TemporalKB2),
 	delete_relations_with_object(Class,TemporalKB2,NewKB).
+ %¿no deberia ser rm_class_relation?
 
+ 
 changeMother(_,_,[],[]).
 
 changeMother(OldMother,NewMother,[class(C,OldMother,P,R,O)|T],[class(C,NewMother,P,R,O)|N]):-
