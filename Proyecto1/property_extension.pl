@@ -8,6 +8,6 @@
 % 	eliminate_null_property(Objects,Result).
 
 
-property_extension(Prop, KB, Objs):-
+property_extension(Prop, KB, Res):-
 	mapea_todo_objeto_propiedades(KB, Objs_Props_Map),
-	filtra_obj_props(Objs_Props_Map, Prop, KB, Objs).
+	filtra_obj_props(Objs_Props_Map, Prop, KB, Res).
