@@ -9,29 +9,33 @@
 :- use_module(create).
 :- use_module(delete).
 
-%--------------------------------------------------------------------------------------------------
-%Operations for changing classes, objects or properties into the Knowledge Base
-%--------------------------------------------------------------------------------------------------
+
+%%%%%%%%%%%%%%%%%%%%%%% Operaciones para cambiar clases, objetos, relaciones y propiedades en la base de conocimiento %%%%%%%%%%%%%%%%%%%%%%%%%%5
 
 
+% ++++++++++++++++++++++++++++++++ Cambiar el valor de una propiedad de un objeto +++++++++++++++++++++++++++++++
 change_value_object_property(Object,Property,NewValue,KB,NewKB):-
 	rm_object_property(Object,Property,KB,TemporalKB),
 	add_object_property(Object,Property,NewValue,TemporalKB,NewKB).
 
+% ++++++++++++++++++++++++++++++++ Cambiar el valor de una relacion de un objeto +++++++++++++++++++++++++++++++
 change_value_object_relation(Object,Relation,NewObjectRelated,KB,NewKB):-
 	rm_object_relation(Object,Relation,KB,TemporalKB),
 	add_object_relation(Object,Relation,NewObjectRelated,TemporalKB,NewKB).
-		
+
+% ++++++++++++++++++++++++++++++++ Cambiar el valor de una relacion de una clase +++++++++++++++++++++++++++++++	
 change_value_class_property(Class,Property,NewValue,KB,NewKB):-
 	rm_class_property(Class,Property,KB,TemporalKB),
 	add_class_property(Class,Property,NewValue,TemporalKB,NewKB).
 
+% ++++++++++++++++++++++++++++++++ Cambiar el valor de una relacion de una clase +++++++++++++++++++++++++++++++
 change_value_class_relation(Class,Relation,NewClassRelated,KB,NewKB):-
 	rm_class_relation(Class,Relation,KB,TemporalKB),
 	add_class_relation(Class,Relation,NewClassRelated,TemporalKB,NewKB).
 
 
-%Change the name of an object	
+
+% ++++++++++++++++++++++++++++++++ Cambiar el nombre de un objeto +++++++++++++++++++++++++++++++
 
 change_object_name(Object,NewName,OriginalKB,NewKB) :-
 	cambiar_elem(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,Props,Rels,NewObjects),OriginalKB,TemporalKB),
@@ -64,8 +68,7 @@ change_relation(OldName,NewName,[H|T],[H|NewT]):-
 	change_relation(OldName,NewName,T,NewT).
 
 
-%Change the name of a class
-
+% ++++++++++++++++++++++++++++++++ Cambiar el nombre de una clase +++++++++++++++++++++++++++++++
 change_class_name(Class,NewName,KB,NewKB):-
 	cambiar_elem(class(Class,Mother,Props,Rels,Objects),class(NewName,Mother,Props,Rels,Objects),KB,TemporalKB),
 	changeMother(Class,NewName,TemporalKB,TemporalKB2),
