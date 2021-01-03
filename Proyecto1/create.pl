@@ -13,6 +13,11 @@
 %Add new class
 
 add_class(NewClass,Mother,OriginalKB,NewKB) :-
+	not(existencia_clase(NewClass,OriginalKB, no)),
+	not(existencia_clase(NewClass,OriginalKB, yes)),
+	not(existencia_objeto(NewClass,OriginalKB,no)),
+	not(existencia_objeto(NewClass,OriginalKB,yes)),
+	existencia_clase(Mother,OriginalKB, yes),
 	append(OriginalKB,[class(NewClass,Mother,[],[],[])],NewKB).
 
 %Add new class property
