@@ -3,6 +3,6 @@
 
 % Property extension
 property_extension(Property,KB,Result):-
-	objects_of_a_class(top,KB,AllObjects),
+	objetos_de_una_clase(top,KB,AllObjects),
 	filter_objects_with_property(KB,Property,AllObjects,Objects),
 	eliminate_null_property(Objects,Result).
