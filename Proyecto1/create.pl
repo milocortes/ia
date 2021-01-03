@@ -76,6 +76,8 @@ add_object_property(Object,NewProperty,Value,OriginalKB,NewKB) :-
 %++++++++++++++++++++++++++++++++++++++++++++++ Agregar nueva relacion de objeto ++++++++++++++++++++++++++++++++++++++++++++++
 
 add_object_relation(Object,NewRelation,OtherObject,OriginalKB,NewKB) :-
+	existencia_objeto(Object,OriginalKB, yes),
+	existencia_objeto(OtherObject,OriginalKB, yes),
 	cambiar_elem(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,Props,Rels,NewObjects),OriginalKB,NewKB),
 	verifica_elem([id=>Object,Properties,Relations],Objects),
 	cambiar_elem([id=>Object,Properties,Relations],[id=>Object,Properties,NewRelations],Objects,NewObjects),
