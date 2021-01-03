@@ -1,4 +1,6 @@
 :- module(consult_ops, [objetos_de_una_clase/3,
+						objetos_clase_herencia/3,
+						nombre_objetos_clase_herencia/3,
 						objetos_clase/3,
 						filter_objects_with_property/4,
 						object_property_value/4,
@@ -47,13 +49,27 @@ existencia_clase(Class,[class(_,_,_,_,_)|T],Answer):-
 existencia_objeto(_,[],unknown).
 
 existencia_objeto(Object,[class(_,_,_,_,O)|_],no):-
-	verifica_elem([id=>not(Object),_,_],O).
+	member([id=>not(Object),_,_],O).
 
 existencia_objeto(Object,[class(_,_,_,_,O)|_],yes):-
-	verifica_elem([id=>Object,_,_],O).
+	member([id=>Object,_,_],O).
 
-existencia_objeto(Object,[_|T],Answer):-
+existencia_objeto(Object, [class(_,_,_,_,O)|_], Answer):-
+	existencia_objeto_lista_ids(Object, O, Answer).
+
+
+existencia_objeto(Object,[class(_,_,_,_,_)|T],Answer):-
 	existencia_objeto(Object,T,Answer).
+
+
+existencia_objeto_lista_ids(Object, [Ind|_], yes):-
+	evalua_lista_nombres_clase(Object, Ind).
+
+existencia_objeto_lista_ids(Object, [Ind|_], no):-
+	evalua_lista_nombres_clase(not(Object), Ind).
+
+existencia_objeto_lista_ids(Object, [_|T], Answer):-
+	existencia_objeto_lista_ids(Object, T, Answer).
 
 
 %Obtiene el nombre de la clase madre de una clase a partir de su nombre
@@ -118,8 +134,8 @@ list_of_ancestors(Class,KB,Ancestors):-
 %Obtiene las propiedades de una clase
 %	Si la clase que se busca es top, únicamente se obtienen las 
 %	propiedades que tiene directamente top
-propiedades_de_una_clase(top,KB,Properties):-
-	propiedades_clase(top,KB,Properties).
+%propiedades_de_una_clase(top,KB,Properties):-
+	%propiedades_clase(top,KB,Properties).
 %	Para cualquier clase dentro de la jerarquía que sea distinta de top
 %	- Se valida la existencia de la clase.
 %	- Se obtienen las propiedades directamente dentro de la clase
@@ -243,11 +259,11 @@ class_has_property(Class,Property,KB,Answer):-
 
 incomplete_information(_,[], unknown).
 
-incomplete_information(Atom, List, yes):- verifica_elem(Atom,List).
+incomplete_information(Atom, List, yes):- member(Atom,List).
 
-incomplete_information(not(Atom), List, no):- verifica_elem(Atom,List).
+incomplete_information(not(Atom), List, no):- member(Atom,List).
 
-incomplete_information(Atom, List, no):- verifica_elem(not(Atom),List).
+incomplete_information(Atom, List, no):- member(not(Atom),List).
 
 incomplete_information(_, _, unknown).
 
@@ -281,8 +297,12 @@ clase_de_objeto(_,[],unknown):-!.
 %	dentro de la lista de los individuos (O) de la clase (C)
 %	en el Head de la lista de clases de la KB
 %	por lo tanto C es la clase del individuo
-clase_de_objeto(Object,[class(C,_,_,_,O)|_],C):-
-	member([id=>Object,_,_],O).
+clase_de_objeto(Obj,[class(C,_,_,_,O)|_],C):-
+	member([id=>Obj,_,_],O).
+
+clase_de_objeto(Obj,[class(C,_,_,_,O)|_],C):-
+	clase_lista_ids(Obj, O).
+
 %Caso recursivo:
 %	El nombre del individuo (Object), no se encuentra
 %	dentro de la lista de los individuos de la clase
@@ -290,44 +310,73 @@ clase_de_objeto(Object,[class(C,_,_,_,O)|_],C):-
 %	Por lo tanto, no nos importan los parámetros
 %	de la clase en el Head de la lista y continuamos
 %	procesando el Tail (T) de la lista.
-clase_de_objeto(Object,[class(_,_,_,_,_)|T],Class):-
-	clase_de_objeto(Object,T,Class).
+clase_de_objeto(Obj,[class(_,_,_,_,_)|T],C):-
+	clase_de_objeto(Obj,T,C).
 
+%clase_lista_ids(_, [], _):- false.
+
+clase_lista_ids(Obj, [Ind|_]):-
+	evalua_lista_nombres_clase(Obj, Ind).
+
+clase_lista_ids(Obj, [_|T]):-
+	clase_lista_ids(Obj, T).
+
+evalua_lista_nombres_clase(Obj, [id => Names, _, _]):-
+	member(Obj, Names).
 
 %Regresa una lista de propiedades de un objeto tomando en cuenta
 %la cerradura de la relación de herencia y el principio de especificidad.
-propiedades_de_un_objeto(Object,KB,AllProperties):-
-	existencia_objeto(Object,KB,yes),
-	propiedades_objeto(Object,KB,ObjectProperties),
-	clase_de_objeto(Object,KB,Class),
-	propiedades_de_una_clase(Class,KB,ClassProperties),
-	append(ObjectProperties,ClassProperties,Temp),
-	delete_repeated_properties(Temp,AllProperties).
+propiedades_de_un_objeto(Obj,KB,AllProperties):-
+	existencia_objeto(Obj,KB,yes),
+	propiedades_objeto(Obj,KB,PropsIndividuo),
+	propiedades_heredadas(Obj, KB, PropsHeredadas),
+	append(PropsIndividuo, PropsHeredadas, Props),
+	cancel_repeated_property_values(Props, AllProperties).
 
 propiedades_de_un_objeto(_,_,unknown).
 
+propiedades_heredadas(Obj, KB, Props):-
+	clase_de_objeto(Obj,KB,C),
+	propiedades_clase(C, KB, CProps),
+	propiedades_ancestros(C, KB, AncestrosProps),
+	append(CProps, AncestrosProps, Props).
+
 %Regresa las propiedades unicamente dentro del objeto con un id específico
 %Nota: 
-%	Falta considerar cuando el objeto tenga una lista de ids (varios nombres)
-%	y cuando sea un objeto anónimo
+%	Falta considerar cuando el objeto sea un objeto anónimo
 %Caso base: 
 %	Las propiedades de un objeto, dada una lista de clases vacía, 
 %   sin importar el objeto, son una lista vacía
 propiedades_objeto(_,[],[]).
+
 %Caso base:
 %	La lista de propiedades (Properties) de un objeto (de nombre Object) 
 %   será la lista de propiedades del individuo que a su vez se encuentra dentro de la lista
 %   de individuos (O) de una clase cualquiera en el Head de la KB, si efectivamente
 %	existe un individuo con ese nombre en la lista de individuos de la clase.
-propiedades_objeto(Object,[class(_,_,_,_,O)|_],Properties):-
-	member([id=>Object,Properties,_],O).
+propiedades_objeto(Obj,[class(_,_,_,_,O)|_],Props):-
+	member([id=>Obj,Props,_],O).
+
+propiedades_objeto(Obj,[class(_,_,_,_,O)|_], Props):-
+	propiedades_lista_ids(Obj, O, Props).
+
 %Caso recursivo:
 %	En caso de fallo al encontrar Object en la lista de individuos,
 %   sin importarnos ninguno de los campos de la clase en el Head,
 %	proseguimos a seguir procesando el Tail de la KB
-propiedades_objeto(Object,[class(_,_,_,_,_)|T],Properties):-
-	propiedades_objeto(Object,T,Properties).
-	
+propiedades_objeto(Obj,[class(_,_,_,_,_)|T],Props):-
+	propiedades_objeto(Obj,T,Props).
+
+
+propiedades_lista_ids(Obj, [Ind|_], Props):-
+	evalua_lista_nombres_props(Obj, Ind, Props).
+
+propiedades_lista_ids(Obj, [_|T], Props):-
+	propiedades_lista_ids(Obj,T, Props).
+
+
+evalua_lista_nombres_props(Obj, [id => Names, Props,_], Props):-
+	member(Obj, Names).
 
 
 %Return the value of an object property
@@ -440,9 +489,10 @@ object_relation_value(_,_,_,unknown).
 %validando antes la existencia de ésta
 hijos_clase(_,_,unknown).
 
-hijos_clase(C,KB,Res):-
+hijos_clase(C,KB,FRes):-
 	existencia_clase(C,KB,yes),
-	hijos_clase_recur(C,KB,Res).
+	hijos_clase_recur(C,KB,Res),
+	flatten(Res, FRes).
 
 %Regresa las clases hijo de una clase 
 %recorriendo la lista de la KB
@@ -455,9 +505,9 @@ hijos_clase_recur(_,[],[]).
 %es C (la clase que se busca), continuamos procesando el Tail hasta llegar al caso base
 %resolviendo las llamadas recursivas y concatenando en cada resolución a Hijo (la clase hijo) y Hermanos (sus hermanos)
 %produciendo la lista de Hijos al final
-hijos_clase_recur(C,[class(Hijo,C,_,_,_)|T],Hijos):-
-	hijos_clase_recur(C,T,Hermanos),	
-	append([Hijo],Hermanos,Hijos).
+hijos_clase_recur(C,[class(Hijo,C,_,_,_)|T],[Hijo|T2]):-
+	hijos_clase_recur(C,T,T2).	
+	%append([Hijo],Hermanos,Hijos).
 %Caso recursivo:
 %Si el nombre de la clase madre de la clase que se encuentra en el Head de la lista es 
 %cualquier cosa distinta de C, continuamos procesando el Tail de la lista
@@ -473,12 +523,51 @@ hijos_clases([],_,[]).
 %	Los hijos de una lista de clases (asumiendo que tienen el mismo padre)
 %	son los hijos de la clase en el Head la lista y los hijos del Tail de la lista (los hijos de los hermanos)
 %	es decir es una lista de primos
-hijos_clases([C|T],KB,Primos):-
+hijos_clases([C|T],KB,[Hijos|T2]):-
 	hijos_clase_recur(C,KB,Hijos),
-	hijos_clases(T,KB,Hijos_de_Hermanos),
-	append(Hijos_de_Hermanos,Hijos,Primos).
+	hijos_clases(T,KB,T2).
+	%append(Hijos_de_Hermanos,Hijos,Primos).
+
+nombre_objetos_clase_herencia(C, KB, Objs):-
+	existencia_clase(C, KB, yes),
+	nombre_objetos_clases_cerradura([C], KB, PreObjs),
+	aplana_un_nivel(PreObjs, Objs).
+
+nombre_objetos_clase_herencia(_,_,unknown).
 
 
+nombre_objetos_clases_cerradura([],_,[]).
+
+nombre_objetos_clases_cerradura(Clases, KB, [FObjs|Tail]):-
+	hijos_clases(Clases, KB, Hijos),
+	flatten(Hijos, FHijos),
+	objetos_clases(FHijos, KB, Objs),
+	aplana_un_nivel(Objs, FObjs),
+	nombre_objetos_clases_cerradura(FHijos, KB, Tail).
+
+nombre_objetos_de_una_clase(C, KB, Objetos):-
+	nombre_objetos_clase_herencia(C, KB, Objetos).
+
+
+objetos_clase_herencia(C, KB, Objs):-
+	existencia_clase(C, KB, yes),
+	objetos_clases_cerradura([C], KB, PreObjs),
+	aplana_un_nivel(PreObjs, Objs).
+
+objetos_clase_herencia(_,_,unknown).
+
+
+objetos_clases_cerradura([],_,[]).
+
+objetos_clases_cerradura(Clases, KB, [FObjs|Tail]):-
+	hijos_clases(Clases, KB, Hijos),
+	flatten(Hijos, FHijos),
+	objetos_clases_completos(FHijos, KB, Objs),
+	aplana_un_nivel(Objs, FObjs),
+	objetos_clases_cerradura(FHijos, KB, Tail).
+
+objetos_de_una_clase(C, KB, Objetos):-
+	objetos_clase_herencia(C, KB, Objetos).
 
 %Regresa los ids de objetos de una clase respetando la cerradura de la relación de herencia.
 %Los ids de objetos de una clase pueden existir si dicha clase existe,
@@ -509,8 +598,23 @@ objetos_clase(C,[class(C,_,_,_,O)|_],Objs):-
 %Caso recursivo:
 %Si el nombre de la clase en el Head de la KB es cualquier otra cosa que C (nombre de la clase que se está buscando),
 %continuamos procesando el Tail de la lista
-objetos_clase(C,[class(_,_,_,_,_)|T],Objects):-
-	objetos_clase(C,T,Objects).
+objetos_clase(C,[class(_,_,_,_,_)|T],Objs):-
+	objetos_clase(C,T,Objs).
+
+%Regresa los ids de objetos únicamente dentro de una clase específica
+%Caso base:
+%Para una KB vacía, se regresa que no se sabe si hay objetos dentro de la 
+%clase especificada para evitar la negación por falla.
+objetos_clase_completos(_,[],unknown).
+%Caso recursivo:
+%Si el nombre de la clase en el Head de la KB es el mismo que C (nombre la clase que se está buscando),
+%extraemos los ids de los individuos de esta clase y los regresamos
+objetos_clase_completos(C,[class(C,_,_,_,O)|_],O).
+%Caso recursivo:
+%Si el nombre de la clase en el Head de la KB es cualquier otra cosa que C (nombre de la clase que se está buscando),
+%continuamos procesando el Tail de la lista
+objetos_clase_completos(C,[class(_,_,_,_,_)|T],O):-
+	objetos_clase_completos(C,T,O).
 
 %Obtiene los ids de los individuos dentro de una lista de individuos
 %Caso base:
@@ -555,10 +659,24 @@ objetos_clases([],_,[]).
 %	Los objetos de una lista de clases (Objetos_Clases) son 
 %   la concatenacion de la lista de los objetos dentro de la clase en el Head de la lista (Objs)
 %   y la lista de los objetos del tail de la lista (Objetos)
-objetos_clases([C|T],KB,Objetos_Clases):-
+objetos_clases([C|T],KB,[Objs|T2]):-
 	objetos_clase(C,KB,Objs),
-	objetos_clases(T,KB,Objetos),
-	append(Objs,Objetos,Objetos_Clases).
+	objetos_clases(T,KB,T2).
+	%append(Objs,Objetos,Objetos_Clases).
+
+%Obtiene los individuos (u objetos) dentro de una lista de clases
+%Caso base:
+%	Los objetos dentro de una lista de clases vacía son una lista vacía
+objetos_clases_completos([],_,[]).
+%Caso recursivo:
+%	Los objetos de una lista de clases (Objetos_Clases) son 
+%   la concatenacion de la lista de los objetos dentro de la clase en el Head de la lista (Objs)
+%   y la lista de los objetos del tail de la lista (Objetos)
+objetos_clases_completos([C|T],KB,[Objs|T2]):-
+	objetos_clase_completos(C,KB,Objs),
+	objetos_clases_completos(T,KB,T2).
+	%append(Objs,Objetos,Objetos_Clases).
+
 
 %Eliminate null prop
 eliminate_null_property([],[]).

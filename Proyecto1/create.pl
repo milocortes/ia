@@ -13,6 +13,11 @@
 %Add new class
 
 add_class(NewClass,Mother,OriginalKB,NewKB) :-
+	not(existencia_clase(NewClass,OriginalKB, no)),
+	not(existencia_clase(NewClass,OriginalKB, yes)),
+	not(existencia_objeto(NewClass,OriginalKB,no)),
+	not(existencia_objeto(NewClass,OriginalKB,yes)),
+	existencia_clase(Mother,OriginalKB, yes),
 	append(OriginalKB,[class(NewClass,Mother,[],[],[])],NewKB).
 
 %Add new class property
@@ -46,7 +51,12 @@ append_relation(Rels,NewRelation,OtherClass,NewRels):-
 
 %Add new object
 
-add_object(NewObject,Class,OriginalKB,NewKB) :-
+add_object(NewObject,Class,OriginalKB,NewKB) :- 
+	not(existencia_clase(NewObject,OriginalKB, no)),
+	not(existencia_clase(NewObject,OriginalKB, yes)),
+	not(existencia_objeto(NewObject,OriginalKB,no)),
+	not(existencia_objeto(NewObject,OriginalKB,yes)),
+	existencia_clase(Class,OriginalKB, yes),
 	cambiar_elem(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,Props,Rels,NewObjects),OriginalKB,NewKB),
 	append(Objects,[[id=>NewObject,[],[]]],NewObjects).
 

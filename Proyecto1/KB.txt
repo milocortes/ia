@@ -1,6 +1,6 @@
 [
 
-class(top,none,[],[],[]),
+class(top,none,[delicious, nutrients=>high],[],[]),
 
 class(comestible, top, [graspable,not(on_discount)], [], []),
 
@@ -13,7 +13,7 @@ class(cereal, food, [inv=>0,shelf=>p4], [], [
 class(drink, comestible, [age=>all], [], []),
 
 class(soda, drink, [inv=>1,shelf=>p4], [], [	
-	[id => s1, [brand=>coke],[]]
+	[id => [s1, s2, s3], [brand=>coke],[]]
    	]),
 
 class(beer, drink, [age=>18,inv=>1,shelf=>sh2], [], [	
@@ -32,4 +32,6 @@ class(orders, top, [], [], []),
 
 class(failed_orders, top, [], [], [])
 
-]
+]   
+
+
