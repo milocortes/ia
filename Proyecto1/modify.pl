@@ -46,7 +46,7 @@ change_value_class_relation(Class,Relation,NewClassRelated,KB,NewKB):-
 %++++++++++++++++++++++++++++++++++++++++++++++ Cambiar el nombre de un Objeto ++++++++++++++++++++++++++++++++++++++++++++++
 
 change_object_name(Object,NewName,OriginalKB,NewKB) :-
-	existencia_objeto(Object,KB,yes),
+	existencia_objeto(Object,OriginalKB,yes),
 	cambiar_elem(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,Props,Rels,NewObjects),OriginalKB,TemporalKB),
 	verifica_elem([id=>Object|Properties],Objects),
 	cambiar_elem([id=>Object|Properties],[id=>NewName|Properties],Objects,NewObjects),
@@ -84,67 +84,3 @@ change_class_name(Class,NewName,KB,NewKB):-
 	changeMother(Class,NewName,TemporalKB,TemporalKB2),
 	change_relations_with_object(Class,NewName,TemporalKB2,NewKB). %hay que revisar por qué sí hace sentido o por qué no lo hace,
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% remueve_propiedad_objeto/3
-%% el predicado itera sobre la KB y genera 
-%% una nueva lista en la que se excluye a un objeto
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-remueve_propiedad_objeto(_,_,[],[]).
-remueve_propiedad_objeto(Objeto,Propiedad,[Class|T],[NC|NT]):-
-  arg(1,Class,O),
-  arg(2,Class,M),
-  arg(3,Class,P),
-  arg(4,Class,R),
-  arg(5,Class,I),
-  obten_propiedades_objeto_rm(Objeto,Propiedad,I,NI),
-  NC=..[class,O,M,P,R,NI],
-  remueve_propiedad_objeto(Objeto,Propiedad,T,NT).  
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
-%% obten_propiedades_objeto_rm/4
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-obten_propiedades_objeto_rm(_,_,[],[]).
-obten_propiedades_objeto_rm(Objeto,Propiedad,[[id=>Objeto,P,R]|T],[[id=>Objeto,NP,R]|RN]):-
-    elimina_elementos_con_la_propiedad(Propiedad,P,NP),
-    obten_propiedades_objeto_rm(Objeto,Propiedad,T,RN).
-obten_propiedades_objeto_rm(Objeto,Propiedad,[[K=>V,P,R]|T],[[Knew=>Vnew,Pnew,Rnew]|RN]):-
-    Knew=K,
-    Vnew=V,
-    Pnew=P,
-    Rnew=R,
-    obten_propiedades_objeto_rm(Objeto,Propiedad,T,RN).
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% elimina_elementos_con_la_propiedad
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Example (p2,[p1=>v1,p2=>v2,p3=>v3,p2=>v4,p4=>v4],[p1=>v1,p3=>v3,p4=>v4])
-
-elimina_elementos_con_la_propiedad(_,[],[]).
-elimina_elementos_con_la_propiedad(K,[K => _|T],R):-
-  elimina_elementos_con_la_propiedad(K,T,R).
-elimina_elementos_con_la_propiedad(K,[K|T],R):-
-  elimina_elementos_con_la_propiedad(K,T,R).
-elimina_elementos_con_la_propiedad(K,[not(K => _)|T],R):-
-  elimina_elementos_con_la_propiedad(K,T,R).
-elimina_elementos_con_la_propiedad(K,[not(K)|T],R):-
-  elimina_elementos_con_la_propiedad(K,T,R).
-elimina_elementos_con_la_propiedad(K,[P => V|T],[P1=>V1|R]):-
-  P1=P,
-  V1=V,
-  elimina_elementos_con_la_propiedad(K,T,R).
-elimina_elementos_con_la_propiedad(K,[P|T],[P1|R]):-
-  P1=P,
-  elimina_elementos_con_la_propiedad(K,T,R).
