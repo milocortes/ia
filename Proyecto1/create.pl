@@ -6,11 +6,11 @@
                    add_object_relation/5]).
 :- use_module(utils).
 
-%--------------------------------------------------------------------------------------------------
-%Operations for adding classes, objects or properties into the Knowledge Base
-%--------------------------------------------------------------------------------------------------
 
-%Add new class
+%%%%%%%%%%%%%%%%%%%%%%% Operaciones para agregar clases, objetos, propiedades y relaciones en la base de conocimiento %%%%%%%%%%%%%%%%%%%%%%%%%%5
+
+
+%++++++++++++++++++++++++++++++++++++++++++++++ Agregar una nueva clase ++++++++++++++++++++++++++++++++++++++++++++++
 
 add_class(NewClass,Mother,OriginalKB,NewKB) :-
 	not(existencia_clase(NewClass,OriginalKB, no)),
@@ -20,9 +20,11 @@ add_class(NewClass,Mother,OriginalKB,NewKB) :-
 	existencia_clase(Mother,OriginalKB, yes),
 	append(OriginalKB,[class(NewClass,Mother,[],[],[])],NewKB).
 
-%Add new class property
+
+%++++++++++++++++++++++++++++++++++++++++++++++ Agregar nueva propiedad de clase ++++++++++++++++++++++++++++++++++++++++++++++
 
 add_class_property(Class,NewProperty,Value,OriginalKB,NewKB) :-
+	existencia_clase(Class,OriginalKB, yes), %
 	cambiar_elem(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,NewProps,Rels,Objects),OriginalKB,NewKB),
 	append_property(Props,NewProperty,Value,NewProps).
 
@@ -36,11 +38,19 @@ append_property(Props,NewProperty,Value,NewProps):-
 	append(Props,[NewProperty=>Value],NewProps).
 
 
-%Add new class relation
-
+%++++++++++++++++++++++++++++++++++++++++++++++ Agregar nueva relación de clase ++++++++++++++++++++++++++++++++++++++++++++++
+%	Relacion: clase-clase 
 add_class_relation(Class,NewRelation,OtherClass,OriginalKB,NewKB) :-
+	existencia_clase(Class,OriginalKB, yes),
+	existencia_clase(OtherClass,OriginalKB, yes),
 	cambiar_elem(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,Props,NewRels,Objects),OriginalKB,NewKB),
 	append_relation(Rels,NewRelation,OtherClass,NewRels).
+%	Relacion: clase-objeto 
+add_class_relation(Class,NewRelation,OtherObject,OriginalKB,NewKB) :-
+	existencia_clase(Class,OriginalKB, yes),
+	existencia_objeto(OtherObject,OriginalKB, yes),
+	cambiar_elem(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,Props,NewRels,Objects),OriginalKB,NewKB),
+	append_relation(Rels,NewRelation,OtherObject,NewRels).
 
 append_relation(Rels,not(NewRelation),OtherClass,NewRels):-
 	append(Rels,[not(NewRelation=>OtherClass)],NewRels).
@@ -49,7 +59,7 @@ append_relation(Rels,NewRelation,OtherClass,NewRels):-
 	append(Rels,[NewRelation=>OtherClass],NewRels).
 
 
-%Add new object
+%++++++++++++++++++++++++++++++++++++++++++++++ Agregar un nuevo objeto ++++++++++++++++++++++++++++++++++++++++++++++
 
 add_object(NewObject,Class,OriginalKB,NewKB) :- 
 	not(existencia_clase(NewObject,OriginalKB, no)),
@@ -61,20 +71,30 @@ add_object(NewObject,Class,OriginalKB,NewKB) :-
 	append(Objects,[[id=>NewObject,[],[]]],NewObjects).
 
 
-%Add new object property
+%++++++++++++++++++++++++++++++++++++++++++++++ Agregar nueva propiedad de objeto ++++++++++++++++++++++++++++++++++++++++++++++
 
 add_object_property(Object,NewProperty,Value,OriginalKB,NewKB) :-
+	existencia_objeto(Object,OriginalKB,yes), %
 	cambiar_elem(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,Props,Rels,NewObjects),OriginalKB,NewKB),
 	verifica_elem([id=>Object,Properties,Relations],Objects),
 	cambiar_elem([id=>Object,Properties,Relations],[id=>Object,NewProperties,Relations],Objects,NewObjects),
 	append_property(Properties,NewProperty,Value,NewProperties).
 
 
-%Add new object relation
-
+%++++++++++++++++++++++++++++++++++++++++++++++ Agregar nueva relacion de objeto ++++++++++++++++++++++++++++++++++++++++++++++
+%	Relacion: objeto-objeto 
 add_object_relation(Object,NewRelation,OtherObject,OriginalKB,NewKB) :-
+	existencia_objeto(Object,OriginalKB, yes), %
+	existencia_objeto(OtherObject,OriginalKB, yes),%
 	cambiar_elem(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,Props,Rels,NewObjects),OriginalKB,NewKB),
 	verifica_elem([id=>Object,Properties,Relations],Objects),
 	cambiar_elem([id=>Object,Properties,Relations],[id=>Object,Properties,NewRelations],Objects,NewObjects),
 	append_relation(Relations,NewRelation,OtherObject,NewRelations).
-
+%	Relacion: objeto-clase 
+add_object_relation(Object,NewRelation,OtherClass,OriginalKB,NewKB) :-
+	existencia_objeto(Object,OriginalKB, yes), %
+	existencia_clase(OtherClass,OriginalKB, yes),%
+	cambiar_elem(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,Props,Rels,NewObjects),OriginalKB,NewKB),
+	verifica_elem([id=>Object,Properties,Relations],Objects),
+	cambiar_elem([id=>Object,Properties,Relations],[id=>Object,Properties,NewRelations],Objects,NewObjects),
+	append_relation(Relations,NewRelation,OtherClass,NewRelations).

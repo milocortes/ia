@@ -9,29 +9,41 @@
 :- use_module(create).
 :- use_module(delete).
 
-%--------------------------------------------------------------------------------------------------
-%Operations for changing classes, objects or properties into the Knowledge Base
-%--------------------------------------------------------------------------------------------------
+
+%%%%%%%%%%%%%%%%%%%%%%% Operaciones para modificar clases, objetos, propiedades y relaciones en la base de conocimiento %%%%%%%%%%%%%%%%%%%%%%%%%%5
 
 
+%++++++++++++++++++++++++++++++++++++++++++++++ Cambiar una propiedad del Objeto ++++++++++++++++++++++++++++++++++++++++++++++
 change_value_object_property(Object,Property,NewValue,KB,NewKB):-
-	rm_object_property(Object,Property,KB,TemporalKB),
-	add_object_property(Object,Property,NewValue,TemporalKB,NewKB).
+	existencia_objeto(Object,KB,yes),
+	remueve_propiedad_objeto(Object,Property,KB,TemporalKB), % eliminamos la propiedad que le mandamos
+	add_object_property(Object,Property,NewValue,TemporalKB,NewKB). %agregamos de nuevo la propiedad pero con el valor nuevo.
 
+
+%++++++++++++++++++++++++++++++++++++++++++++++ Cambiar valor de la relación del Objeto ++++++++++++++++++++++++++++++++++++++++++++++
 change_value_object_relation(Object,Relation,NewObjectRelated,KB,NewKB):-
+	existencia_objeto(Object,KB,yes),
 	rm_object_relation(Object,Relation,KB,TemporalKB),
 	add_object_relation(Object,Relation,NewObjectRelated,TemporalKB,NewKB).
-		
+
+
+%++++++++++++++++++++++++++++++++++++++++++++++ Cambiar propiedad de una clase ++++++++++++++++++++++++++++++++++++++++++++++
 change_value_class_property(Class,Property,NewValue,KB,NewKB):-
+	existencia_clase(Class,KB, yes),
 	rm_class_property(Class,Property,KB,TemporalKB),
 	add_class_property(Class,Property,NewValue,TemporalKB,NewKB).
 
+
+%++++++++++++++++++++++++++++++++++++++++++++++ Cambiar valor de la relación de una clase ++++++++++++++++++++++++++++++++++++++++++++++
+
 change_value_class_relation(Class,Relation,NewClassRelated,KB,NewKB):-
+	existencia_clase(Class,KB, yes),
+	existencia_clase(NewClassRelated,KB, yes),
 	rm_class_relation(Class,Relation,KB,TemporalKB),
 	add_class_relation(Class,Relation,NewClassRelated,TemporalKB,NewKB).
 
 
-%Change the name of an object	
+%++++++++++++++++++++++++++++++++++++++++++++++ Cambiar el nombre de un Objeto ++++++++++++++++++++++++++++++++++++++++++++++
 
 change_object_name(Object,NewName,OriginalKB,NewKB) :-
 	cambiar_elem(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,Props,Rels,NewObjects),OriginalKB,TemporalKB),
@@ -43,7 +55,7 @@ change_relations_with_object(_,_,[],[]).
 
 change_relations_with_object(Object,NewName,[class(C,M,P,R,O)|T],[class(C,M,P,NewR,NewO)|NewT]):-
 	change_relations(Object,NewName,O,NewO),
-	change_relation(Object,NewName,R,NewR),
+	change_relation(Object,NewName,R,NewR), %no tiene mucho sentido, pero hay que darselo
 	change_relations_with_object(Object,NewName,T,NewT).
 
 change_relations(_,_,[],[]).
@@ -63,10 +75,72 @@ change_relation(OldName,NewName,[not(R=>OldName)|T],[not(R=>NewName)|NewT]):-
 change_relation(OldName,NewName,[H|T],[H|NewT]):-
 	change_relation(OldName,NewName,T,NewT).
 
-
-%Change the name of a class
+%++++++++++++++++++++++++++++++++++++++++++++++ Cambiar el nombre de una Clase ++++++++++++++++++++++++++++++++++++++++++++++
 
 change_class_name(Class,NewName,KB,NewKB):-
 	cambiar_elem(class(Class,Mother,Props,Rels,Objects),class(NewName,Mother,Props,Rels,Objects),KB,TemporalKB),
 	changeMother(Class,NewName,TemporalKB,TemporalKB2),
-	change_relations_with_object(Class,NewName,TemporalKB2,NewKB).
+	change_relations_with_object(Class,NewName,TemporalKB2,NewKB). %hay que revisar por qué sí hace sentido o por qué no lo hace,
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% remueve_propiedad_objeto/3
+%% el predicado itera sobre la KB y genera 
+%% una nueva lista en la que se excluye a un objeto
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+remueve_propiedad_objeto(_,_,[],[]).
+remueve_propiedad_objeto(Objeto,Propiedad,[Class|T],[NC|NT]):-
+  arg(1,Class,O),
+  arg(2,Class,M),
+  arg(3,Class,P),
+  arg(4,Class,R),
+  arg(5,Class,I),
+  obten_propiedades_objeto_rm(Objeto,Propiedad,I,NI),
+  NC=..[class,O,M,P,R,NI],
+  remueve_propiedad_objeto(Objeto,Propiedad,T,NT).  
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
+%% obten_propiedades_objeto_rm/4
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+obten_propiedades_objeto_rm(_,_,[],[]).
+obten_propiedades_objeto_rm(Objeto,Propiedad,[[id=>Objeto,P,R]|T],[[id=>Objeto,NP,R]|RN]):-
+    elimina_elementos_con_la_propiedad(Propiedad,P,NP),
+    obten_propiedades_objeto_rm(Objeto,Propiedad,T,RN).
+obten_propiedades_objeto_rm(Objeto,Propiedad,[[K=>V,P,R]|T],[[Knew=>Vnew,Pnew,Rnew]|RN]):-
+    Knew=K,
+    Vnew=V,
+    Pnew=P,
+    Rnew=R,
+    obten_propiedades_objeto_rm(Objeto,Propiedad,T,RN).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% elimina_elementos_con_la_propiedad
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Example (p2,[p1=>v1,p2=>v2,p3=>v3,p2=>v4,p4=>v4],[p1=>v1,p3=>v3,p4=>v4])
+
+elimina_elementos_con_la_propiedad(_,[],[]).
+elimina_elementos_con_la_propiedad(K,[K => _|T],R):-
+  elimina_elementos_con_la_propiedad(K,T,R).
+elimina_elementos_con_la_propiedad(K,[not(K => _)|T],R):-
+  elimina_elementos_con_la_propiedad(K,T,R).
+elimina_elementos_con_la_propiedad(K,[P => V|T],[P1=>V1|R]):-
+  P1=P,
+  V1=V,
+  elimina_elementos_con_la_propiedad(K,T,R).
