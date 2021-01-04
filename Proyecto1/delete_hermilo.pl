@@ -176,6 +176,9 @@ obten_instancia(Objeto,[[K=>V,P,R]|T],[[Kn=>Vn,Pn,RN]|RT]):-
 remueve_relacion_con_objeto(_,[],[]).
 remueve_relacion_con_objeto(Objeto,[_ =>Objeto|T],NR):-
   remueve_relacion_con_objeto(Objeto,T,NR).
+remueve_relacion_con_objeto(Objeto,[_ =>Nombres|T],NR):-
+    member(Objeto,Nombres),
+    remueve_relacion_con_objeto(Objeto,T,NR).
 remueve_relacion_con_objeto(Objeto,[K =>V|T],[Knew =>Vnew|NR]):-
   Knew = K,
   Vnew = V,
@@ -226,6 +229,9 @@ remueve_objeto(Objeto,[Class|T],[NC|NT]):-
 %% obten_intancias_rm/3
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 obten_intancias_rm(_,[],[]).
+obten_intancias_rm(Objeto,[[_=>Nombres,_,_]|T],R):-
+    member(Objeto,Nombres),
+    obten_intancias_rm(Objeto,T,R).
 obten_intancias_rm(Objeto,[[_=>Objeto,_,_]|T],R):-
     obten_intancias_rm(Objeto,T,R).
 obten_intancias_rm(Objeto,[[K=>V,P,R]|T],[[Knew=>Vnew,Pnew,Rnew]|RN]):-
@@ -331,6 +337,10 @@ remueve_propiedad_objeto(Objeto,Propiedad,[Class|T],[NC|NT]):-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 obten_propiedades_objeto_rm(_,_,[],[]).
 obten_propiedades_objeto_rm(Objeto,Propiedad,[[id=>Objeto,P,R]|T],[[id=>Objeto,NP,R]|RN]):-
+    elimina_elementos_con_la_propiedad(Propiedad,P,NP),
+    obten_propiedades_objeto_rm(Objeto,Propiedad,T,RN).
+obten_propiedades_objeto_rm(Objeto,Propiedad,[[id=>Nombres,P,R]|T],[[id=>Objeto,NP,R]|RN]):-
+    member(Objeto,Nombres),
     elimina_elementos_con_la_propiedad(Propiedad,P,NP),
     obten_propiedades_objeto_rm(Objeto,Propiedad,T,RN).
 obten_propiedades_objeto_rm(Objeto,Propiedad,[[K=>V,P,R]|T],[[Knew=>Vnew,Pnew,Rnew]|RN]):-
