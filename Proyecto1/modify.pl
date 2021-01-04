@@ -95,11 +95,6 @@ change_class_name(Class,NewName,KB,NewKB):-
 
 
 
-
-
-
-
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% remueve_propiedad_objeto/3
 %% el predicado itera sobre la KB y genera 
@@ -138,9 +133,16 @@ obten_propiedades_objeto_rm(Objeto,Propiedad,[[K=>V,P,R]|T],[[Knew=>Vnew,Pnew,Rn
 elimina_elementos_con_la_propiedad(_,[],[]).
 elimina_elementos_con_la_propiedad(K,[K => _|T],R):-
   elimina_elementos_con_la_propiedad(K,T,R).
+elimina_elementos_con_la_propiedad(K,[K|T],R):-
+  elimina_elementos_con_la_propiedad(K,T,R).
 elimina_elementos_con_la_propiedad(K,[not(K => _)|T],R):-
+  elimina_elementos_con_la_propiedad(K,T,R).
+elimina_elementos_con_la_propiedad(K,[not(K)|T],R):-
   elimina_elementos_con_la_propiedad(K,T,R).
 elimina_elementos_con_la_propiedad(K,[P => V|T],[P1=>V1|R]):-
   P1=P,
   V1=V,
+  elimina_elementos_con_la_propiedad(K,T,R).
+elimina_elementos_con_la_propiedad(K,[P|T],[P1|R]):-
+  P1=P,
   elimina_elementos_con_la_propiedad(K,T,R).
