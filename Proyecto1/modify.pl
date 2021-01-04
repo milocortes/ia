@@ -46,6 +46,7 @@ change_value_class_relation(Class,Relation,NewClassRelated,KB,NewKB):-
 %++++++++++++++++++++++++++++++++++++++++++++++ Cambiar el nombre de un Objeto ++++++++++++++++++++++++++++++++++++++++++++++
 
 change_object_name(Object,NewName,OriginalKB,NewKB) :-
+	existencia_objeto(Object,KB,yes),
 	cambiar_elem(class(Class,Mother,Props,Rels,Objects),class(Class,Mother,Props,Rels,NewObjects),OriginalKB,TemporalKB),
 	verifica_elem([id=>Object|Properties],Objects),
 	cambiar_elem([id=>Object|Properties],[id=>NewName|Properties],Objects,NewObjects),
@@ -78,6 +79,7 @@ change_relation(OldName,NewName,[H|T],[H|NewT]):-
 %++++++++++++++++++++++++++++++++++++++++++++++ Cambiar el nombre de una Clase ++++++++++++++++++++++++++++++++++++++++++++++
 
 change_class_name(Class,NewName,KB,NewKB):-
+	existencia_clase(Class,KB, yes),
 	cambiar_elem(class(Class,Mother,Props,Rels,Objects),class(NewName,Mother,Props,Rels,Objects),KB,TemporalKB),
 	changeMother(Class,NewName,TemporalKB,TemporalKB2),
 	change_relations_with_object(Class,NewName,TemporalKB2,NewKB). %hay que revisar por qué sí hace sentido o por qué no lo hace,
