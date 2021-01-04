@@ -4,58 +4,58 @@
 a=>b.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% elimina_propiedad_clase/3
+%% elimina_relacion_clase/3
 %% el predicado itera sobre la KB y genera 
-%% una nueva lista en la que se excluye la propiedad 
+%% una nueva lista en la que se excluye la relacion 
 %% de una clase
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% remueve_propiedad_clase/3
+%% remueve_relacion_clase/3
 %% el predicado itera sobre la KB y genera 
-%% una nueva lista en la que se excluye la propiedad
+%% una nueva lista en la que se excluye la relacion
 %% específica de una clase
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-remueve_propiedad_clase(_,_,[],[]).
-remueve_propiedad_clase(Clase,Propiedad,[Class|T],[NC|NT]):-   
+remueve_relacion_clase(_,_,[],[]).
+remueve_relacion_clase(Clase,Relacion,[Class|T],[NC|NT]):-   
   arg(1,Class,O),
   arg(2,Class,M),
   arg(3,Class,P),
   arg(4,Class,R),
   arg(5,Class,I),
-  cambia_propiedades_clase(Clase,O,Propiedad,P,NP),
-  NC=..[class,O,M,NP,R,I],
-  remueve_propiedad_clase(Clase,Propiedad,T,NT).
+  cambia_relaciones_clase(Clase,O,Relacion,R,NR),
+  NC=..[class,O,M,P,NR,I],
+  remueve_relacion_clase(Clase,Relacion,T,NT).
   
 
-cambia_propiedades_clase(_,_,_,[],[]).
-cambia_propiedades_clase(Clase,Clase,Propiedad,P,NP):-
-    elimina_elementos_con_la_propiedad(Propiedad,P,NP).
-cambia_propiedades_clase(_,_,_,P,NP):-
-    NP=P.
+cambia_relaciones_clase(_,_,_,[],[]).
+cambia_relaciones_clase(Clase,Clase,Relacion,R,NR):-
+    elimina_elementos_con_la_relacion(Relacion,R,NR).
+cambia_relaciones_clase(_,_,_,R,NR):-
+    NR=R.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% elimina_elementos_con_la_propiedad
+%% elimina_elementos_con_la_relacion
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Example (p2,[p1=>v1,p2=>v2,p3=>v3,p2=>v4,p4=>v4],[p1=>v1,p3=>v3,p4=>v4])
 
-elimina_elementos_con_la_propiedad(_,[],[]).
-elimina_elementos_con_la_propiedad(K,[K => _|T],R):-
-  elimina_elementos_con_la_propiedad(K,T,R).
-elimina_elementos_con_la_propiedad(K,[K|T],R):-
-  elimina_elementos_con_la_propiedad(K,T,R).
-elimina_elementos_con_la_propiedad(K,[not(K)|T],R):-
-  elimina_elementos_con_la_propiedad(K,T,R).
-elimina_elementos_con_la_propiedad(K,[not(K => _)|T],R):-
-  elimina_elementos_con_la_propiedad(K,T,R).
-elimina_elementos_con_la_propiedad(K,[P => V|T],[P1=>V1|R]):-
+elimina_elementos_con_la_relacion(_,[],[]).
+elimina_elementos_con_la_relacion(K,[K => _|T],R):-
+  elimina_elementos_con_la_relacion(K,T,R).
+elimina_elementos_con_la_relacion(K,[K|T],R):-
+  elimina_elementos_con_la_relacion(K,T,R).
+elimina_elementos_con_la_relacion(K,[not(K)|T],R):-
+  elimina_elementos_con_la_relacion(K,T,R).
+elimina_elementos_con_la_relacion(K,[not(K => _)|T],R):-
+  elimina_elementos_con_la_relacion(K,T,R).
+elimina_elementos_con_la_relacion(K,[P => V|T],[P1=>V1|R]):-
   P1=P,
   V1=V,
-  elimina_elementos_con_la_propiedad(K,T,R).
-elimina_elementos_con_la_propiedad(K,[P|T],[P1|R]):-
+  elimina_elementos_con_la_relacion(K,T,R).
+elimina_elementos_con_la_relacion(K,[P|T],[P1|R]):-
   P1=P,
-  elimina_elementos_con_la_propiedad(K,T,R).
+  elimina_elementos_con_la_relacion(K,T,R).
 
   %--------------------------------------------------
   % Load and Save from files

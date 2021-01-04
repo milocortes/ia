@@ -62,7 +62,6 @@ elimina_relaciones_con_objeto(Objeto,[Class|T],[NC|TN]):-
   arg(5,Class,Instances),
   obten_instancia(Objeto,Instances,NR),
   NC=..[class,O,M,P,R,NR],
-  write(NC),nl,
   elimina_relaciones_con_objeto(Objeto,T,TN).
 
 
@@ -70,11 +69,10 @@ elimina_relaciones_con_objeto(Objeto,[Class|T],[NC|TN]):-
 %% obten_instancia
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 obten_instancia(_,[],[]).
-obten_instancia(Objeto,[I|T],[[Id,P,NR]|R]):-
-  obten_relaciones_objeto(I,RI),
-  obten_id_objeto(I,Id),
-  obten_propiedades_objeto(I,P),
-  remueve_relacion_con_objeto(Objeto,RI,NR),
+obten_instancia(Objeto,[[_=>O,P,R]|T],[[id=>On,Pn,NR]|R]):-
+  On=O,
+  Pn=P,
+  remueve_relacion_con_objeto(Objeto,R,NR),
   obten_instancia(Objeto,T,R).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -83,15 +81,15 @@ obten_instancia(Objeto,[I|T],[[Id,P,NR]|R]):-
 %% valor un objeto específico
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 remueve_relacion_con_objeto(_,[],[]).
-remueve_relacion_con_objeto(Objeto,[[_ =>Objeto]|T],NR):-
+remueve_relacion_con_objeto(Objeto,[_ =>Objeto|T],NR):-
   remueve_relacion_con_objeto(Objeto,T,NR).
-remueve_relacion_con_objeto(Objeto,[[K =>V]|T],[Knew =>Vnew|NR]):-
+remueve_relacion_con_objeto(Objeto,[K =>V|T],[Knew =>Vnew|NR]):-
   Knew = K,
   Vnew = V,
   remueve_relacion_con_objeto(Objeto,T,NR).
-remueve_relacion_con_objeto(Objeto,[[not(_ =>Objeto)]|T],NR):-
+remueve_relacion_con_objeto(Objeto,[not(_ =>Objeto)|T],NR):-
   remueve_relacion_con_objeto(Objeto,T,NR).
-remueve_relacion_con_objeto(Objeto,[[not(K =>V)]|T],[not(Knew =>Vnew)|NR]):-
+remueve_relacion_con_objeto(Objeto,[not(K =>V)|T],[not(Knew =>Vnew)|NR]):-
   Knew = K,
   Vnew = V,
   remueve_relacion_con_objeto(Objeto,T,NR).
@@ -113,6 +111,43 @@ obten_propiedades_objeto([_,E| _], E).
 %%% Obtiene el id del objeto
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 obten_id_objeto([E,_| _], E).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% elimina_relaciones_con_clase
+%% El predicado remueve todas las relaciones
+%% en las que está presente un Clase 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+elimina_relaciones_con_clase(_,[],[]).
+elimina_relaciones_con_clase(Clase,[CO|T],[NC|TN]):-
+  arg(1,CO,O),
+  arg(2,CO,M),
+  arg(3,CO,P),
+  arg(4,CO,R),
+  arg(5,CO,I),
+  remueve_relacion_con_clase(Clase,R,NR),
+  NC=..[class,O,M,P,NR,I],
+  write(NC),nl,
+  elimina_relaciones_con_clase(Clase,T,TN).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% remueve_relacion_con_clase
+%% Remueve la relación en la que aparece como 
+%% valor una clase específica
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+remueve_relacion_con_clase(_,[],[]).
+remueve_relacion_con_clase(Clase,[_ =>Clase|T],NR):-
+  remueve_relacion_con_clase(Clase,T,NR).
+remueve_relacion_con_clase(Clase,[not(_ =>Clase)|T],NR):-
+  remueve_relacion_con_clase(Clase,T,NR).
+remueve_relacion_con_clase(Clase,[K =>V|T],[Knew =>Vnew|NR]):-
+  Knew = K,
+  Vnew = V,
+  remueve_relacion_con_clase(Clase,T,NR).
+remueve_relacion_con_clase(Clase,[not(K =>V)|T],[not(Knew =>Vnew)|NR]):-
+  Knew = K,
+  Vnew = V,
+  remueve_relacion_con_clase(Clase,T,NR).
 
   %--------------------------------------------------
   % Load and Save from files

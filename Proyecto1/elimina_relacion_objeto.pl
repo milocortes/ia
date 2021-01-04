@@ -1,61 +1,68 @@
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % se define un operador "=>"
 :-op(15,xfx,'=>').
 a=>b.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% elimina_propiedad_clase/3
+%% elimina_propiedad_objeto/3
 %% el predicado itera sobre la KB y genera 
 %% una nueva lista en la que se excluye la propiedad 
-%% de una clase
+%% de un objeto
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% remueve_propiedad_clase/3
+%% remueve_relacion_objeto/3
 %% el predicado itera sobre la KB y genera 
-%% una nueva lista en la que se excluye la propiedad
-%% específica de una clase
+%% una nueva lista en la que se excluye a un objeto
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-remueve_propiedad_clase(_,_,[],[]).
-remueve_propiedad_clase(Clase,Propiedad,[Class|T],[NC|NT]):-   
+remueve_relacion_objeto(_,_,[],[]).
+remueve_relacion_objeto(Objeto,Relacion,[Class|T],[NC|NT]):-
   arg(1,Class,O),
   arg(2,Class,M),
   arg(3,Class,P),
   arg(4,Class,R),
   arg(5,Class,I),
-  cambia_propiedades_clase(Clase,O,Propiedad,P,NP),
-  NC=..[class,O,M,NP,R,I],
-  remueve_propiedad_clase(Clase,Propiedad,T,NT).
-  
+  obten_relaciones_objeto_rm(Objeto,Relacion,I,NI),
+  NC=..[class,O,M,P,R,NI],
+  remueve_relacion_objeto(Objeto,Relacion,T,NT).  
 
-cambia_propiedades_clase(_,_,_,[],[]).
-cambia_propiedades_clase(Clase,Clase,Propiedad,P,NP):-
-    elimina_elementos_con_la_propiedad(Propiedad,P,NP).
-cambia_propiedades_clase(_,_,_,P,NP):-
-    NP=P.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
+%% obten_relaciones_objeto_rm/4
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+obten_relaciones_objeto_rm(_,_,[],[]).
+obten_relaciones_objeto_rm(Objeto,Relacion,[[id=>Objeto,P,R]|T],[[id=>Objeto,P,NR]|RN]):-
+    elimina_elementos_con_la_relacion(Relacion,R,NR),
+    obten_relaciones_objeto_rm(Objeto,Relacion,T,RN).
+obten_relaciones_objeto_rm(Objeto,Relacion,[[K=>V,P,R]|T],[[Knew=>Vnew,Pnew,Rnew]|RN]):-
+    Knew=K,
+    Vnew=V,
+    Pnew=P,
+    Rnew=R,
+    obten_relaciones_objeto_rm(Objeto,Relacion,T,RN).
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% elimina_elementos_con_la_propiedad
+%% elimina_elementos_con_la_relacion
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Example (p2,[p1=>v1,p2=>v2,p3=>v3,p2=>v4,p4=>v4],[p1=>v1,p3=>v3,p4=>v4])
 
-elimina_elementos_con_la_propiedad(_,[],[]).
-elimina_elementos_con_la_propiedad(K,[K => _|T],R):-
-  elimina_elementos_con_la_propiedad(K,T,R).
-elimina_elementos_con_la_propiedad(K,[K|T],R):-
-  elimina_elementos_con_la_propiedad(K,T,R).
-elimina_elementos_con_la_propiedad(K,[not(K)|T],R):-
-  elimina_elementos_con_la_propiedad(K,T,R).
-elimina_elementos_con_la_propiedad(K,[not(K => _)|T],R):-
-  elimina_elementos_con_la_propiedad(K,T,R).
-elimina_elementos_con_la_propiedad(K,[P => V|T],[P1=>V1|R]):-
+elimina_elementos_con_la_relacion(_,[],[]).
+elimina_elementos_con_la_relacion(K,[K => _|T],R):-
+  elimina_elementos_con_la_relacion(K,T,R).
+elimina_elementos_con_la_relacion(K,[K|T],R):-
+  elimina_elementos_con_la_relacion(K,T,R).
+elimina_elementos_con_la_relacion(K,[not(K => _)|T],R):-
+  elimina_elementos_con_la_relacion(K,T,R).
+elimina_elementos_con_la_relacion(K,[not(K)|T],R):-
+  elimina_elementos_con_la_relacion(K,T,R).
+elimina_elementos_con_la_relacion(K,[P => V|T],[P1=>V1|R]):-
   P1=P,
   V1=V,
-  elimina_elementos_con_la_propiedad(K,T,R).
-elimina_elementos_con_la_propiedad(K,[P|T],[P1|R]):-
+  elimina_elementos_con_la_relacion(K,T,R).
+elimina_elementos_con_la_relacion(K,[P|T],[P1|R]):-
   P1=P,
-  elimina_elementos_con_la_propiedad(K,T,R).
+  elimina_elementos_con_la_relacion(K,T,R).
 
   %--------------------------------------------------
   % Load and Save from files

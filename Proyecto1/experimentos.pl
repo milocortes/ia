@@ -145,7 +145,91 @@ delete_all_elements_with_property(K,[P => V|T],[P1=>V1|R]):-
   delete_all_elements_with_property(K,T,R).
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% elimina_relaciones_con_objeto
+%% El predicado remueve todas las relaciones
+%% en las que está presente un objeto 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+elimina_relaciones_con_objeto(_,[],[]).
+elimina_relaciones_con_objeto(Objeto,[Class|T],[NC|TN]):-
+  arg(1,Class,O),
+  arg(2,Class,M),
+  arg(3,Class,P),
+  arg(4,Class,R),
+  arg(5,Class,Instances),
+  get_instancia(Objeto,Instances,NR),
+  NC=..[class,O,M,P,R,NR],
+  write(NC),nl,
+  elimina_relaciones_con_objeto(Objeto,T,TN).
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% get_instancia
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+get_instancia(_,[],[]).
+get_instancia(Objeto,[I|T],[[Id,P,NR]|R]):-
+  get_relations(I,RI),
+  get_id(I,Id),
+  get_properties(I,P),
+  remove_relation(Objeto,RI,NR),
+  get_instancia(Objeto,T,R).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% get_instance
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+get_instances([]).
+get_instances([Class|T]):-
+  arg(5,Class,Instance),
+  write(Instance),nl,
+  get_relations_of_instances(Instance),
+  get_instances(T).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% get_relations_of_instances
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+get_relations_of_instances([]).
+get_relations_of_instances([Instance|T]):-
+  get_relations(Instance,Relations),
+  write(Relations),nl,
+  get_relations_of_instances(T).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% get_relations
+%%% Obtiene todas las relaciones del objeto
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+get_relations([_,_| E], E).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% get_properties
+%%% Obtiene todas las propiedades del objeto
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+get_properties([_,E| _], E).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% get_id
+%%% Obtiene el id del objeto
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+get_id([E,_| _], E).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% remove_relation
+%% Remueve la relación en la que aparece como 
+%% valor un objeto específico
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+remove_relation(_,[],[]).
+remove_relation(Objeto,[[_ =>Objeto]|T],NR):-
+  remove_relation(Objeto,T,NR).
+remove_relation(Objeto,[[K =>V]|T],[Knew =>Vnew|NR]):-
+  Knew = K,
+  Vnew = V,
+  remove_relation(Objeto,T,NR).
+remove_relation(Objeto,[[not(_ =>Objeto)]|T],NR):-
+  remove_relation(Objeto,T,NR).
+remove_relation(Objeto,[[not(K =>V)]|T],[not(Knew =>Vnew)|NR]):-
+  Knew = K,
+  Vnew = V,
+  remove_relation(Objeto,T,NR).
 
   %--------------------------------------------------
   % Load and Save from files
