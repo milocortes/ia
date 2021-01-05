@@ -8,6 +8,7 @@
 :- use_module(utils).
 :- use_module(create).
 :- use_module(delete).
+:- use_module(delete_hermilo).
 
 
 %%%%%%%%%%%%%%%%%%%%%%% Operaciones para modificar clases, objetos, propiedades y relaciones en la base de conocimiento %%%%%%%%%%%%%%%%%%%%%%%%%%5
@@ -16,21 +17,21 @@
 %++++++++++++++++++++++++++++++++++++++++++++++ Cambiar una propiedad del Objeto ++++++++++++++++++++++++++++++++++++++++++++++
 change_value_object_property(Object,Property,NewValue,KB,NewKB):-
 	existencia_objeto(Object,KB,yes),
-	remueve_propiedad_objeto(Object,Property,KB,TemporalKB), % eliminamos la propiedad que le mandamos
+	elimina_propiedad_objeto(Object,Property,KB,TemporalKB), % eliminamos la propiedad que le mandamos
 	add_object_property(Object,Property,NewValue,TemporalKB,NewKB). %agregamos de nuevo la propiedad pero con el valor nuevo.
 
 
 %++++++++++++++++++++++++++++++++++++++++++++++ Cambiar valor de la relación del Objeto ++++++++++++++++++++++++++++++++++++++++++++++
 change_value_object_relation(Object,Relation,NewObjectRelated,KB,NewKB):-
 	existencia_objeto(Object,KB,yes),
-	rm_object_relation(Object,Relation,KB,TemporalKB),
+	remueve_relacion_objeto(Object,Relation,KB,TemporalKB),
 	add_object_relation(Object,Relation,NewObjectRelated,TemporalKB,NewKB).
 
 
 %++++++++++++++++++++++++++++++++++++++++++++++ Cambiar propiedad de una clase ++++++++++++++++++++++++++++++++++++++++++++++
 change_value_class_property(Class,Property,NewValue,KB,NewKB):-
 	existencia_clase(Class,KB, yes),
-	rm_class_property(Class,Property,KB,TemporalKB),
+	elimina_propiedad_clase(Class,Property,KB,TemporalKB),
 	add_class_property(Class,Property,NewValue,TemporalKB,NewKB).
 
 
@@ -39,7 +40,7 @@ change_value_class_property(Class,Property,NewValue,KB,NewKB):-
 change_value_class_relation(Class,Relation,NewClassRelated,KB,NewKB):-
 	existencia_clase(Class,KB, yes),
 	existencia_clase(NewClassRelated,KB, yes),
-	rm_class_relation(Class,Relation,KB,TemporalKB),
+	elimina_relacion_clase(Class,Relation,KB,TemporalKB),
 	add_class_relation(Class,Relation,NewClassRelated,TemporalKB,NewKB).
 
 
