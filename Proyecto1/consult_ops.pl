@@ -28,13 +28,8 @@
 						relations_of_individual/3,
 						property_extension/3,
 						propiedades_individuo/3,
-						propiedades_clase/3]).
+						class_properties/3]).
 :- use_module(utils).
-
-
-%--------------------------------------------------------------------------------------------------
-%Operations for consulting 
-%--------------------------------------------------------------------------------------------------
 
 
 %Verifica si una clase o su negado existe
@@ -841,7 +836,11 @@ filtra_obj_rels([_|T], Rel, KB, Objs):-
 	filtra_obj_rels(T, Rel, KB, Objs).
 
 
-%Class extension
+
+%---------------------------------
+%Servicios principales
+%---------------------------------
+%Servicio para extensión de clase
 extension_clase_nombres(C,KB,Objs):-
 	nombre_objetos_clase_herencia(C,KB,Objs).	
 
@@ -849,7 +848,7 @@ extension_clase_objetos(C,KB,Objs):-
 	objetos_clase_herencia(C,KB,Objs).	
 
 
-%Classes of individual
+%Servicio para clases de un individuo
 classes_of_individual(Object,KB,Classes):-
 	existencia_objeto(Object,KB,yes),
 	clase_de_objeto(Object,KB,X),
@@ -859,25 +858,27 @@ classes_of_individual(Object,KB,Classes):-
 classes_of_individual(_,_,unknown).
 
 
-
+%Servicio para obtener la extensión de una relación
 relation_extension(Rel, KB, Res):-
 	mapea_todo_objeto_relaciones(KB, Objs_Rels_Map),
 	filtra_obj_rels(Objs_Rels_Map, Rel, KB, Res).
 
+%Servicio para obtener las relaciones de un individuo
 relations_of_individual(Object,KB,ExpandedRelations):-
 	relaciones_de_un_objeto(Object,KB,Relations),
 	expandir_relaciones_clase(Relations,KB, ExpandedRelations).
 
 relations_of_individual(_,_,unknown).
 
-
+%Servicio para obtener la extensión de una propiedad
 property_extension(Prop, KB, Res):-
 	mapea_todo_objeto_propiedades(KB, Objs_Props_Map),
 	filtra_obj_props(Objs_Props_Map, Prop, KB, Res).
 
+%Servicio para obtener las propiedades de un individuo
 %Regresa una lista con propiedades de un individuo
 propiedades_individuo(Object,KB,Properties):-
 	propiedades_de_un_objeto(Object,KB,Properties).
 
-propiedades_clase(C, KB, Props):-
+class_properties(C, KB, Props):-
 	propiedades_de_una_clase(C, KB, Props).
