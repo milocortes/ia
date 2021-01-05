@@ -72,30 +72,30 @@ pruebas :-
 	%----------------------------------------------------------------------------------------------
 	%Pruebas de extensión de una propiedad
 	%----------------------------------------------------------------------------------------------
-	% open_kb('KB.txt', KB),
-	% property_extension(on_discount, KB, Ans),
-	% write(Ans),
-	% nl,
-	% property_extension(not(on_discount), KB, Ans2),
-	% write(Ans2),
-	% nl,
-	% property_extension(brand, KB, Ans3),
-	% write(Ans3),
-	% nl,
-	% property_extension(brand=>heineken, KB, Ans4),
-	% write(Ans4),
-	% nl,
-	% property_extension(delicious, KB, Ans5),
-	% write(Ans5),
-	% nl,
-	% property_extension(not(delicious), KB, Ans6),
-	% write(Ans6),
-	% nl,
-	% property_extension(nutrients=>high, KB, Ans7),
-	% write(Ans7),
-	% nl,
-	% property_extension(not(nutrients=>high), KB, Ans8),
-	% write(Ans8).
+	open_kb('KB.txt', KB),
+	property_extension(on_discount, KB, Ans),
+	write(Ans),
+	nl,
+	property_extension(not(on_discount), KB, Ans2),
+	write(Ans2),
+	nl,
+	property_extension(brand, KB, Ans3),
+	write(Ans3),
+	nl,
+	property_extension(brand=>heineken, KB, Ans4),
+	write(Ans4),
+	nl,
+	property_extension(delicious, KB, Ans5),
+	write(Ans5),
+	nl,
+	property_extension(not(delicious), KB, Ans6),
+	write(Ans6),
+	nl,
+	property_extension(nutrients=>high, KB, Ans7),
+	write(Ans7),
+	nl,
+	property_extension(not(nutrients=>high), KB, Ans8),
+	write(Ans8).
 	%----------------------------------------------------------------------------------------------
 	%Pruebas para la extensión de una clase
 	%----------------------------------------------------------------------------------------------
@@ -136,9 +136,9 @@ pruebas :-
 	% extension_clase_objetos(comestible, NewKB, Ans2),
 	% write(Ans2),
 	% nl,nl,
-	%----------------------------------------------------------------------------------------------
-	%Pruebas para las propiedades de un individuo o de una clase
-	%----------------------------------------------------------------------------------------------
+	% ----------------------------------------------------------------------------------------------
+	% Pruebas para las propiedades de un individuo o de una clase
+	% ----------------------------------------------------------------------------------------------
 	% write('d1 properties: '),
 	% propiedades_individuo(d1, NewKB, Props),
 	% write(Props),
