@@ -1,7 +1,10 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% se define un operador "=>"
-:-op(15,xfx,'=>').
-a=>b.
+:- module(delete, [elimina_clase/3,
+                   elimina_objeto/3,
+                   elimina_propiedad_clase/4,
+                   elimina_propiedad_objeto/4,
+                   elimina_relacion_clase/4,
+                   remueve_relacion_objeto/4]).
+:- use_module(utils).
 
 
 %%-------------------------------------
@@ -242,12 +245,12 @@ obten_intancias_rm(Objeto,[[K=>V,P,R]|T],[[Knew=>Vnew,Pnew,Rnew]|RN]):-
     obten_intancias_rm(Objeto,T,RN).
 
 %%-------------------------------------
-%% elimina_propiedad_clase/3
+%% elimina_propiedad_clase/4
 %%-------------------------------------
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% elimina_propiedad_clase/3
+%% elimina_propiedad_clase/4
 %% el predicado itera sobre la KB y genera
 %% una nueva lista en la que se excluye la propiedad
 %% de una clase
@@ -303,11 +306,11 @@ elimina_elementos_con_la_propiedad(K,[P|T],[P1|R]):-
   elimina_elementos_con_la_propiedad(K,T,R).
 
 %%-------------------------------------
-%% elimina_propiedad_objeto/3
+%% elimina_propiedad_objeto/4
 %%-------------------------------------
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% elimina_propiedad_objeto/3
+%% elimina_propiedad_objeto/4
 %% el predicado itera sobre la KB y genera
 %% una nueva lista en la que se excluye la propiedad
 %% de un objeto
@@ -409,18 +412,10 @@ elimina_elementos_con_la_relacion(K,[P|T],[P1|R]):-
   P1=P,
   elimina_elementos_con_la_relacion(K,T,R).
 %%-------------------------------------
-%% elimina_relacion_objeto/4
+%% remueve_relacion_objeto/4
 %%-------------------------------------
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% elimina_propiedad_objeto/4
-%% el predicado itera sobre la KB y genera
-%% una nueva lista en la que se excluye la propiedad
-%% de un objeto
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% remueve_relacion_objeto/3
+%% remueve_relacion_objeto/4
 %% el predicado itera sobre la KB y genera
 %% una nueva lista en la que se excluye a un objeto
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -448,41 +443,3 @@ obten_relaciones_objeto_rm(Objeto,Relacion,[[K=>V,P,R]|T],[[Knew=>Vnew,Pnew,Rnew
     Pnew=P,
     Rnew=R,
     obten_relaciones_objeto_rm(Objeto,Relacion,T,RN).
-
-%--------------------------------------------------
-% Load and Save from files
-%--------------------------------------------------
-
-
-  %KB open and save
-
-  open_kb(Route,KB):-
-  	open(Route,read,Stream),
-  	readclauses(Stream,X),
-  	close(Stream),
-  	atom_to_term_conversion(X,KB).
-
-  save_kb(Route,KB):-
-  	open(Route,write,Stream),
-  	writeq(Stream,KB),
-  	close(Stream).
-
-  readclauses(InStream,W) :-
-          get0(InStream,Char),
-          checkCharAndReadRest(Char,Chars,InStream),
-  	atom_chars(W,Chars).
-
-
-  checkCharAndReadRest(-1,[],_) :- !.  % End of Stream
-  checkCharAndReadRest(end_of_file,[],_) :- !.
-
-  checkCharAndReadRest(Char,[Char|Chars],InStream) :-
-          get0(InStream,NextChar),
-          checkCharAndReadRest(NextChar,Chars,InStream).
-
-  atom_to_term_conversion(ATOM, TERM) :-
-  	 atom(ATOM),
-  	 atom_to_chars(ATOM,STR),
-  	 atom_to_chars('.',PTO),
-  	 append(STR,PTO,STR_PTO),
-  	 read_from_chars(STR_PTO,TERM).

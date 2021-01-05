@@ -8,7 +8,6 @@
 :- use_module(utils).
 :- use_module(create).
 :- use_module(delete).
-:- use_module(delete_hermilo).
 
 
 %%%%%%%%%%%%%%%%%%%%%%% Operaciones para modificar clases, objetos, propiedades y relaciones en la base de conocimiento %%%%%%%%%%%%%%%%%%%%%%%%%%5
@@ -85,3 +84,8 @@ change_class_name(Class,NewName,KB,NewKB):-
 	changeMother(Class,NewName,TemporalKB,TemporalKB2),
 	change_relations_with_object(Class,NewName,TemporalKB2,NewKB). %hay que revisar por qué sí hace sentido o por qué no lo hace,
 
+changeMother(_,_,[],[]).
+changeMother(OldMother,NewMother,[class(C,OldMother,P,R,O)|T],[class(C,NewMother,P,R,O)|N]):-
+    changeMother(OldMother,NewMother,T,N).
+changeMother(OldMother,NewMother,[H|T],[H|N]):-
+    changeMother(OldMother,NewMother,T,N).
