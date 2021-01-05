@@ -7,17 +7,17 @@ class(comestible, top, [graspable,not(on_discount)], [], []),
 class(food, comestible, [], [], []),
 
 class(cereal, food, [inv=>0,shelf=>p4], [], [	
-	[id => c1, [brand=>kellogs],[]]
+	[id => c1, [brand=>kellogs, not(delicious)],[]]
    	]),
 
 class(drink, comestible, [age=>all], [], []),
 
 class(soda, drink, [inv=>1,shelf=>p4], [], [	
-	[id => [s1, s2, s3], [brand=>coke],[]]
+	[id => [s1, s2, s3], [brand=>coke, not(nutrients=>high)],[]]
    	]),
 
 class(beer, drink, [age=>18,inv=>1,shelf=>sh2], [], [	
-	[id => b1, [brand=>heineken],[]]
+	[id => b1, [brand=>heineken, not(nutrients=>high)],[]]
    	]),
    	
 class(dairy, comestible, [inv=>1,shelf=>p4], [], [	

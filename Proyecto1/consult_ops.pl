@@ -1,5 +1,9 @@
 :- module(consult_ops, [objetos_de_una_clase/3,
 						objetos_clase_herencia/3,
+						mapea_lista_objetos_propiedades/3,
+						filtra_obj_props/4,
+						filtra_obj_rels/4,
+						mapea_todo_objeto_propiedades/2,
 						nombre_objetos_clase_herencia/3,
 						objetos_clase/3,
 						filter_objects_with_property/4,
@@ -12,9 +16,11 @@
 						class_ancestors/3,
 						propiedades_de_un_objeto/3,
 						expand_classes_to_objects/3,
-						object_relations/3,
+						relaciones_de_un_objeto/3,
 						propiedades_de_una_clase/3,
-						propiedades_ancestros/3]).
+						propiedades_ancestros/3,
+						expandir_relaciones_clase/3,
+						mapea_todo_objeto_relaciones/2]).
 :- use_module(utils).
 
 
@@ -97,10 +103,25 @@ propiedades_ancestros(C,KB,unknown):-
 
 lista_props_ancestros(none,_,[]).
 
-lista_props_ancestros(C,KB,[Properties|T]):-
+lista_props_ancestros(C,KB,[Props|T]):-
 	mother_of_a_class(C,KB,M),
 	lista_props_ancestros(M,KB,T),
-	propiedades_clase(M,KB,Properties).
+	propiedades_clase(M,KB,Props).
+
+
+relaciones_ancestros(C, KB, Rels):-
+	existencia_clase(C,KB,yes),
+	lista_rels_ancestros(C,KB,Rels).	
+
+relaciones_ancestros(C,KB,unknown):-
+	existencia_clase(C,KB,unknown).
+
+lista_rels_ancestros(none,_,[]).
+
+lista_rels_ancestros(C,KB,[Relaciones|T]):-
+	mother_of_a_class(C,KB,M),
+	lista_rels_ancestros(M,KB,T),
+	relaciones_clase(M,KB,Relaciones).
 
 %Obtiene los ancestros de la clase
 %	-Valida la existencia de la clase
@@ -132,14 +153,10 @@ list_of_ancestors(Class,KB,Ancestors):-
 	append([Mother],GrandParents,Ancestors).
 
 %Obtiene las propiedades de una clase
-%	Si la clase que se busca es top, únicamente se obtienen las 
-%	propiedades que tiene directamente top
-%propiedades_de_una_clase(top,KB,Properties):-
-	%propiedades_clase(top,KB,Properties).
 %	Para cualquier clase dentro de la jerarquía que sea distinta de top
 %	- Se valida la existencia de la clase.
 %	- Se obtienen las propiedades directamente dentro de la clase
-%	- Se obtienen los ancestros de la clase
+%	- Se obtienen las propiedades de las clases ancestros
 %	- Se concatenan todas las propiedades de cada ancestro para obtener todas las propiedades
 %	  asociadas a la clase
 %	- Elimina todas las propiedades repetidas que se hayan obtenido del predicado anterior
@@ -163,11 +180,11 @@ propiedades_clase(_,[],[]).
 %Caso base:
 %	La clase con el nombre de clase para la cuál se buscan sus propiedades (Class)
 %	se encuentra en el Head de la lista (se unifican) y se hace el binding de Properties
-propiedades_clase(Class,[class(Class,_,Properties,_,_)|_],Properties).
+propiedades_clase(C,[class(C,_,Props,_,_)|_],Props).
 %Caso recursivo:
 %	La clase en el Head no es la que se busca, se sigue evaluando el Tail de la lista.
-propiedades_clase(Class,[class(_,_,_,_,_)|T],Properties):-
-	propiedades_clase(Class,T,Properties).
+propiedades_clase(C,[class(_,_,_,_,_)|T],Props):-
+	propiedades_clase(C,T,Props).
 
 %Concatena las propiedades de varias clases
 %Caso base: 
@@ -390,40 +407,40 @@ object_property_value(_,_,_,unknown).
 
 
 %Consult the relations of a class
-class_relations(top,KB,Relations):-
-	relations_only_in_the_class(top,KB,Relations).
+relaciones_clase_herencia(top,KB,Relations):-
+	relaciones_clase(top,KB,Relations).
 
-class_relations(Class,KB,Relations):-
+relaciones_clase_herencia(Class,KB,Relations):-
 	existencia_clase(Class,KB,yes),
-	relations_only_in_the_class(Class,KB,ClassRelations),
-	append([ClassRelations],AncestorsRelations,AllRelations),
-	concat_ancestors_relations(Ancestors,KB,AncestorsRelations),
+	relaciones_clase(Class,KB,ClassRelations),
 	list_of_ancestors(Class,KB,Ancestors),
+	concat_ancestors_relations(Ancestors,KB,AncestorsRelations),
+	append([ClassRelations],AncestorsRelations,AllRelations),
 	cancel_repeated_property_values(AllRelations,Relations).
 
-class_relations(_,_,unknown).
+relaciones_clase_herencia(_,_,unknown).
 
 
-relations_only_in_the_class(_,[],[]).
+relaciones_clase(_,[],[]).
 
-relations_only_in_the_class(Class,[class(Class,_,_,Relations,_)|_],Relations).
+relaciones_clase(Class,[class(Class,_,_,Relations,_)|_],Relations).
 
-relations_only_in_the_class(Class,[_|T],Relations):-
-	relations_only_in_the_class(Class,T,Relations).
+relaciones_clase(Class,[_|T],Relations):-
+	relaciones_clase(Class,T,Relations).
 
 
 concat_ancestors_relations([],_,[]).
 
 concat_ancestors_relations([Ancestor|T],KB,[Relations|NewT]):-
 	concat_ancestors_relations(T,KB,NewT),
-	relations_only_in_the_class(Ancestor,KB,Relations).
+	relaciones_clase(Ancestor,KB,Relations).
 
 
 
 %Return the value of a class relation
 class_relation_value(Class,Relation,KB,Value):-
 	existencia_clase(Class,KB,yes),
-	class_relations(Class,KB,Relations),
+	relaciones_clase_herencia(Class,KB,Relations),
 	find_value_relation(Relation,Relations,Value).
 
 class_relation_value(_,_,_,unknown).
@@ -454,31 +471,54 @@ find_value_positive_relation(Attribute,[_|T],Value):-
 
 
 %List all the relations of an object
-object_relations(Object,KB,AllRelations):-
+relaciones_de_un_objeto(Object,KB,AllRelations):-
 	existencia_objeto(Object,KB,yes),
-	relations_only_in_the_object(Object,KB,ObjectRelations),
-	clase_de_objeto(Object,KB,Class),
-	class_relations(Class,KB,ClassRelations),
-	append([ObjectRelations],[ClassRelations],Temp),
+	relaciones_objeto(Object,KB,ObjectRelations),
+	relaciones_heredadas(Object, KB, RelsHeredadas),
+	%clase_de_objeto(Object,KB,Class),
+	%relaciones_clase_herencia(Class,KB,ClassRelations),
+	append(ObjectRelations,RelsHeredadas,Temp),
 	cancel_repeated_property_values(Temp,AllRelations).
 
-object_relations(_,_,unknown).
+relaciones_de_un_objeto(_,_,unknown).
+
+relaciones_heredadas(Obj, KB, Rels):-
+	clase_de_objeto(Obj, KB, C),
+	relaciones_clase(C, KB, CRels),
+	relaciones_ancestros(C, KB, AncestrosRels),
+	append(CRels, AncestrosRels, Rels).
+
+relaciones_objeto(_,[],[]).
+
+relaciones_objeto(Object,[class(_,_,_,_,O)|_],Relations):-
+	member([id=>Object,_,Relations],O).
+
+relaciones_objeto(Object,[_|T],Relations):-
+	relaciones_objeto(Object,T,Relations).
 
 
-relations_only_in_the_object(_,[],[]).
+expandir_relaciones_clase([Relacion=>Clase|T], KB, [Relacion=>Objs|T2]):-
+	existencia_clase(Clase, KB, yes),
+	nombre_objetos_clase_herencia(Clase, KB, Objs),
+	expandir_relaciones_clase(T, KB, T2).
 
-relations_only_in_the_object(Object,[class(_,_,_,_,O)|_],Relations):-
-	verifica_elem([id=>Object,_,Relations],O).
+expandir_relaciones_clase([not(Relacion=>Clase)|T], KB, [not(Relacion=>Objs)|T2]):-
+	existencia_clase(Clase, KB, yes),
+	nombre_objetos_clase_herencia(Clase, KB, Objs),
+	expandir_relaciones_clase(T, KB, T2).
 
-relations_only_in_the_object(Object,[_|T],Relations):-
-	relations_only_in_the_object(Object,T,Relations).
+expandir_relaciones_clase([Relacion=>Ind|T], KB, [Relacion=>Ind|T2]):-
+	expandir_relaciones_clase(T, KB, T2).
 
+expandir_relaciones_clase([not(Relacion=>Ind)|T], KB, [not(Relacion=>Ind)|T2]):-
+	expandir_relaciones_clase(T, KB, T2).
 
+expandir_relaciones_clase([],_, []).
 
 %Return the value of an object relation
 object_relation_value(Object,Relation,KB,Value):-
 	existencia_objeto(Object,KB,yes),
-	object_relations(Object,KB,Relations),
+	relaciones_de_un_objeto(Object,KB,Relations),
 	find_value_relation(Relation,Relations,Value).
 
 object_relation_value(_,_,_,unknown).
@@ -530,8 +570,10 @@ hijos_clases([C|T],KB,[Hijos|T2]):-
 
 nombre_objetos_clase_herencia(C, KB, Objs):-
 	existencia_clase(C, KB, yes),
+	objetos_clase(C, KB, CObjs),
 	nombre_objetos_clases_cerradura([C], KB, PreObjs),
-	aplana_un_nivel(PreObjs, Objs).
+	aplana_un_nivel(PreObjs, FObjs),
+	append(CObjs, FObjs, Objs).
 
 nombre_objetos_clase_herencia(_,_,unknown).
 
@@ -551,8 +593,10 @@ nombre_objetos_de_una_clase(C, KB, Objetos):-
 
 objetos_clase_herencia(C, KB, Objs):-
 	existencia_clase(C, KB, yes),
+	objetos_clase_completos(C, KB, CObjs),
 	objetos_clases_cerradura([C], KB, PreObjs),
-	aplana_un_nivel(PreObjs, Objs).
+	aplana_un_nivel(PreObjs, FObjs),
+	append(CObjs, FObjs, Objs).
 
 objetos_clase_herencia(_,_,unknown).
 
@@ -712,3 +756,78 @@ filter_objects_with_property(_,_,[],[]).
 filter_objects_with_property(KB,Property,[H|T],[H:Value|NewT]):-
 	object_property_value(H,Property,KB,Value),
 	filter_objects_with_property(KB,Property,T,NewT).
+
+
+mapea_todo_objeto_propiedades(KB, Objs_Props_Map):-
+	nombre_objetos_clase_herencia(top,KB,TodoObjeto),
+	mapea_lista_objetos_propiedades(TodoObjeto, KB, Objs_Props_Map).
+
+mapea_lista_objetos_propiedades([],_,[]).
+
+mapea_lista_objetos_propiedades([Obj|T], KB, [Obj_Prop_Map|T2]):-
+	extrae_obj_props(Obj, KB, Obj_Prop_Map),
+	mapea_lista_objetos_propiedades(T, KB, T2).
+
+extrae_obj_props(Obj, KB, [Obj, Props]):-
+	propiedades_de_un_objeto(Obj, KB, Props).
+
+mapea_todo_objeto_relaciones(KB, Objs_Rels_Map):-
+	nombre_objetos_clase_herencia(top,KB,TodoObjeto),
+	mapea_lista_objetos_relaciones(TodoObjeto, KB, Objs_Rels_Map).
+
+mapea_lista_objetos_relaciones([],_,[]).
+
+mapea_lista_objetos_relaciones([Obj|T], KB, [Obj_Rel_Map|T2]):-
+	extrae_obj_rels(Obj, KB, Obj_Rel_Map),
+	mapea_lista_objetos_relaciones(T, KB, T2).
+
+extrae_obj_rels(Obj, KB, [Obj, Rels]):-
+	relaciones_de_un_objeto(Obj, KB, Rels).
+
+
+filtra_obj_props([],_,_,[]).
+
+%Verifica propiedad atómica
+filtra_obj_props([[Obj, Props]|T], Prop, KB, [Obj|T2]):-
+	member(Prop, Props),
+	filtra_obj_props(T, Prop, KB, T2).
+
+%Verifica propiedad en forma atributo-valor
+filtra_obj_props([[Obj, Props]|T], Prop, KB, [Obj:Valor|T2]):-
+	member(Prop=>_, Props),
+	obtiene_valor(Prop, Props, Valor),
+	filtra_obj_props(T, Prop, KB, T2).
+
+%Verifica propiedad en forma not(atributo-valor)
+filtra_obj_props([[Obj, Props]|T], not(Prop), KB, [Obj:Valor|T2]):-
+	member(not(Prop=>_), Props),
+	obtiene_valor(not(Prop), Props, Valor),
+	filtra_obj_props(T, not(Prop), KB, T2).
+
+filtra_obj_props([_|T], Prop, KB, Objs):-
+	filtra_obj_props(T, Prop, KB, Objs).
+
+
+obtiene_valor(_,[],_):-false.
+
+obtiene_valor(Prop,[Prop=>Value|_],Value).
+
+obtiene_valor(not(Prop),[not(Prop=>Value)|_],Value).
+
+obtiene_valor(Prop,[_|T],Value):-
+	obtiene_valor(Prop,T,Value).
+
+filtra_obj_rels([],_,_,[]).
+
+filtra_obj_rels([[Obj, Rels]|T], Rel, KB, [Obj:Valor|T2]):-
+	member(Rel=>_, Rels),
+	obtiene_valor(Rel, Rels, Valor),
+	filtra_obj_rels(T, Rel, KB, T2).
+
+filtra_obj_rels([[Obj, Rels]|T], not(Rel), KB, [Obj:Valor|T2]):-
+	member(not(Rel=>_), Rels),
+	obtiene_valor(not(Rel), Rels, Valor),
+	filtra_obj_rels(T, not(Rel), KB, T2).
+
+filtra_obj_rels([_|T], Rel, KB, Objs):-
+	filtra_obj_rels(T, Rel, KB, Objs).
