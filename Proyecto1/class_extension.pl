@@ -1,5 +1,5 @@
-:- module(class_extension,[extension_clase_nombres/3,
-						   extension_clase_objetos/3]).
+%:- module(class_extension,[extension_clase_nombres/3,
+%						   extension_clase_objetos/3]).
 :- use_module(consult_ops).
 
 %Class extension

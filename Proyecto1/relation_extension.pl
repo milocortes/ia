@@ -1,4 +1,4 @@
-:- module(relation_extension, [relation_extension/3]).
+%:- module(relation_extension, [relation_extension/3]).
 							   %relation_extension2/3]).
 :- use_module(consult_ops).
 

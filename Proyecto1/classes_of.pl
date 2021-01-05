@@ -1,4 +1,4 @@
-:- module(classes_of, [classes_of_individual/3]).
+%:- module(classes_of, [classes_of_individual/3]).
 :-use_module(consult_ops).
 
 %Classes of individual

@@ -1,4 +1,4 @@
-:- module(property_extension, [property_extension/3]).
+% :- module(property_extension, [property_extension/3]).
 :- use_module(consult_ops).
 
 % Property extension

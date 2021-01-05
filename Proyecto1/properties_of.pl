@@ -1,5 +1,5 @@
-:-module(properties_of, [propiedades_individuo/3,
-						 propiedades_clase/3]).
+% :-module(properties_of, [propiedades_individuo/3,
+% 						 propiedades_clase/3]).
 :-use_module(consult_ops).
 
 %Regresa una lista con propiedades de un individuo
