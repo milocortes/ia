@@ -28,7 +28,8 @@
 						relations_of_individual/3,
 						property_extension/3,
 						propiedades_individuo/3,
-						class_properties/3]).
+						class_properties/3,
+						relations_of_class/3]).
 :- use_module(utils).
 
 
@@ -478,8 +479,6 @@ relaciones_de_un_objeto(Object,KB,AllRelations):-
 	existencia_objeto(Object,KB,yes),
 	relaciones_objeto(Object,KB,ObjectRelations),
 	relaciones_heredadas(Object, KB, RelsHeredadas),
-	%clase_de_objeto(Object,KB,Class),
-	%relaciones_clase_herencia(Class,KB,ClassRelations),
 	append(ObjectRelations,RelsHeredadas,Temp),
 	cancel_repeated_property_values(Temp,AllRelations).
 
@@ -613,9 +612,18 @@ objetos_clases_cerradura(Clases, KB, [FObjs|Tail]):-
 	aplana_un_nivel(Objs, FObjs),
 	objetos_clases_cerradura(FHijos, KB, Tail).
 
+
+
+clases_cerradura(top,_,[]).
+
+clases_cerradura(C,KB,[M|T]):-
+	mother_of_a_class(C,KB,M),
+	clases_cerradura(M,KB,T).
+
+
+
 objetos_de_una_clase(C, KB, Objetos):-
 	objetos_clase_herencia(C, KB, Objetos).
-
 %Regresa los ids de objetos de una clase respetando la cerradura de la relación de herencia.
 %Los ids de objetos de una clase pueden existir si dicha clase existe,
 %si la clase (C) existe, obtenemos los objetos que pertenecen a ésta (Objetos_Clase),
@@ -851,9 +859,9 @@ extension_clase_objetos(C,KB,Objs):-
 %Servicio para clases de un individuo
 classes_of_individual(Object,KB,Classes):-
 	existencia_objeto(Object,KB,yes),
-	clase_de_objeto(Object,KB,X),
-	class_ancestors(X,KB,Y),
-	append([X],Y,Classes).
+	clase_de_objeto(Object,KB,C),
+	clases_cerradura(C, KB, Clases_Herencia),
+	append([C], Clases_Herencia, Classes).
 
 classes_of_individual(_,_,unknown).
 
@@ -869,6 +877,15 @@ relations_of_individual(Object,KB,ExpandedRelations):-
 	expandir_relaciones_clase(Relations,KB, ExpandedRelations).
 
 relations_of_individual(_,_,unknown).
+
+relations_of_class(C, KB, FClassRelations):-
+	existencia_clase(C, KB, yes),
+	relaciones_clase(C, KB, CRels),
+	relaciones_ancestros(C, KB, AncestrosRels),
+	append(CRels, AncestrosRels, ClassRelations),
+	flatten(ClassRelations, FClassRelations).
+
+relations_of_class(_,_,unknown).
 
 %Servicio para obtener la extensión de una propiedad
 property_extension(Prop, KB, Res):-
