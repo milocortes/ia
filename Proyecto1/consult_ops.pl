@@ -6,16 +6,10 @@
 						mapea_todo_objeto_propiedades/2,
 						nombre_objetos_clase_herencia/3,
 						objetos_clase/3,
-						filter_objects_with_property/4,
-						object_property_value/4,
-						eliminate_null_property/2,
-						object_relation_value/4,
 						existencia_clase/3,
 						existencia_objeto/3,
 						clase_de_objeto/3,
-						class_ancestors/3,
 						propiedades_de_un_objeto/3,
-						expand_classes_to_objects/3,
 						relaciones_de_un_objeto/3,
 						propiedades_de_una_clase/3,
 						propiedades_ancestros/3,
@@ -32,6 +26,10 @@
 						relations_of_class/3]).
 :- use_module(utils).
 
+
+%-------------------------------------------
+%Predicados auxiliares para consulta
+%-------------------------------------------
 
 %Verifica si una clase o su negado existe
 %Caso base:
@@ -55,7 +53,7 @@ existencia_clase(Class,[class(_,_,_,_,_)|T],Answer):-
 
 
 
-%Verify if an object exists
+%Verifica si un objeto existe considerando objetos con multiples nombres
 existencia_objeto(_,[],unknown).
 
 existencia_objeto(Object,[class(_,_,_,_,O)|_],no):-
@@ -98,6 +96,7 @@ mother_of_a_class(Class,[class(Class,Mother,_,_,_)|_],Mother).
 mother_of_a_class(Class,[class(_,_,_,_,_)|T],Mother):-
 	mother_of_a_class(Class,T,Mother).
 
+
 propiedades_ancestros(C, KB, Props):-
 	existencia_clase(C,KB,yes),
 	lista_props_ancestros(C,KB,Props).	
@@ -127,20 +126,6 @@ lista_rels_ancestros(C,KB,[Relaciones|T]):-
 	lista_rels_ancestros(M,KB,T),
 	relaciones_clase(M,KB,Relaciones).
 
-%Obtiene los ancestros de la clase
-%	-Valida la existencia de la clase
-%	-Si la clase existe, se obtiene la lista de todos sus ancestros
-class_ancestors(Class,KB,ClassAncestors):-
-	existencia_clase(Class,KB,yes),
-	list_of_ancestors(Class,KB,ClassAncestors).
-%Si el predicado anterior falló, claramente habrá sido porque no existe la clase en su forma 
-%afirmativa, por lo tanto se busca si no existe tampoco en su forma negativa para responder no sé y evitar la negación por falla
-%Cabe recalcar que si éste predicado falla (y puesto que el anterior también fallo, para que se haya tenido que evaluar éste)
-%querrá decir que la clase se encuentra en su forma negada, por lo tanto una evaluación falsa implica que la clase se encuentre
-%en su forma negada.
-class_ancestors(Class,KB,unknown):-
-	existencia_clase(Class,KB,unknown).
-
 %Obtiene una lista de todos los ancestros de una clase
 %Caso base:
 %	La clase top no tiene ancestros
@@ -157,21 +142,21 @@ list_of_ancestors(Class,KB,Ancestors):-
 	append([Mother],GrandParents,Ancestors).
 
 %Obtiene las propiedades de una clase
-%	Para cualquier clase dentro de la jerarquía que sea distinta de top
-%	- Se valida la existencia de la clase.
-%	- Se obtienen las propiedades directamente dentro de la clase
-%	- Se obtienen las propiedades de las clases ancestros
-%	- Se concatenan todas las propiedades de cada ancestro para obtener todas las propiedades
-%	  asociadas a la clase
-%	- Elimina todas las propiedades repetidas que se hayan obtenido del predicado anterior
-%	  y aplica el principio de especificidad para eliminar propiedades contradictorias de niveles
-%	  más abstractos de la jerarquía
+	% Para cualquier clase dentro de la jerarquía que sea distinta de top
+	% - Se valida la existencia de la clase.
+	% - Se obtienen las propiedades directamente dentro de la clase
+	% - Se obtienen las propiedades de las clases ancestros
+	% - Se concatenan todas las propiedades de cada ancestro para obtener todas las propiedades
+	%   asociadas a la clase
+	% - Elimina todas las propiedades repetidas que se hayan obtenido del predicado anterior
+	%   y aplica el principio de especificidad para eliminar propiedades contradictorias de niveles
+	%   más abstractos de la jerarquía
 propiedades_de_una_clase(C,KB,Props):-
 	existencia_clase(C,KB,yes),
 	propiedades_clase(C, KB, CProps),
 	propiedades_ancestros(C, KB, AncestrosProps),
 	append(CProps, AncestrosProps, AllProperties),
-	cancel_repeated_property_values(AllProperties,Props).
+	aplica_especificidad(AllProperties,Props).
 
 propiedades_de_una_clase(Class,KB,unknown):-
 	existencia_clase(Class,KB,unknown).
@@ -212,9 +197,9 @@ concat_ancestors_properties([Ancestor|T],KB,[Properties|T2]):-
 %     lista unidimensional, este predicado espera una lista anidada de propiedades.
 %	- Con la obtención de la lista de propiedades aplanada, se procecede a 
 %	  efectuar lo que se menciona en la descripción de este predicado.
-cancel_repeated_property_values(X,Z):-
+aplica_especificidad(X,Z):-
 	flatten(X, Y),
-	delete_repeated_properties(Y,Z).
+	aplica_especificidad_recur(Y,Z).
 
 %Elimina propiedades duplicadas dentro de una lista de propiedades
 %Y aplica el principio de especificidad tomando en cuenta que la lista 
@@ -222,7 +207,7 @@ cancel_repeated_property_values(X,Z):-
 %Caso base:
 %	Borrar duplicados y complementos lógicos de propiedades menos específicas
 %	en una lista vacía de propiedades, es una lista vacía de propiedades
-delete_repeated_properties([],[]).
+aplica_especificidad_recur([],[]).
 %Caso recursivo:
 %	El elemento en el Head de la lista es un par propiedad-valor.
 %		- De nuevo, como se asume que la lista está ordenada por especificidad
@@ -233,10 +218,10 @@ delete_repeated_properties([],[]).
 %		- Continuamos procesando el Tail de la lista
 %	Nótese que se efectúa la concatencación de cada par cuando se resuelven las llamadas
 %	recursivas, para finalmente hacer el binding a la lista de salida
-delete_repeated_properties([P=>V|T],[P=>V|NewT]):-
+aplica_especificidad_recur([P=>V|T],[P=>V|NewT]):-
 	eliminar_elem(P=>_,T,L1),
 	eliminar_elem(not(P=>V),L1,L2),
-	delete_repeated_properties(L2,NewT).
+	aplica_especificidad_recur(L2,NewT).
 %Caso recursivo:
 %	El elemento en el Head de la lista es un par propiedad-valor negado.
 %		- Eliminamos toda propiedad igual a la que tenemos en el Head,
@@ -244,10 +229,10 @@ delete_repeated_properties([P=>V|T],[P=>V|NewT]):-
 %		- También eliminamos toda negación de la propiedad-valor que tenemos en el Head
 %		  del Tail de la lista (En este caso el negado de la propiedad-valor, es la propiedad-valor)
 %		- Continuamos procesando el Tail de la lista
-delete_repeated_properties([not(P=>V)|T],[not(P=>V)|NewT]):-
+aplica_especificidad_recur([not(P=>V)|T],[not(P=>V)|NewT]):-
 	eliminar_elem(not(P=>_),T,L1),
 	eliminar_elem(P=>V,L1,L2),
-	delete_repeated_properties(L2,NewT).
+	aplica_especificidad_recur(L2,NewT).
 %Caso recursivo:
 %	El elemento en el Head de la lista es una propiedad atómica negada.
 %		- Eliminamos toda propiedad negada igual a la que tenemos en el Head,
@@ -255,10 +240,10 @@ delete_repeated_properties([not(P=>V)|T],[not(P=>V)|NewT]):-
 %		- También eliminamos toda propiedad atómica que tenemos en el Head,
 %		  del Tail de la lista
 %		- Continuamos procesando el Tail de la lista
-delete_repeated_properties([not(H)|T],[not(H)|NewT]):-
+aplica_especificidad_recur([not(H)|T],[not(H)|NewT]):-
 	eliminar_elem(not(H),T,L1),
 	eliminar_elem(H,L1,L2),
-	delete_repeated_properties(L2,NewT).
+	aplica_especificidad_recur(L2,NewT).
 %Caso recursivo:
 %	El elemento en el Head de la lista es un propiedad atómica.
 %		- Eliminamos toda propiedad igual a la que tenemos en el Head
@@ -266,49 +251,14 @@ delete_repeated_properties([not(H)|T],[not(H)|NewT]):-
 %		- También eliminamos toda negación de la propiedad atómica que tenemos en el Head,
 %		  del Tail de la lista
 %		- Continuamos procesando el Tail de la lista
-delete_repeated_properties([H|T],[H|NewT]):-
+aplica_especificidad_recur([H|T],[H|NewT]):-
 	eliminar_elem(H,T,L1),
 	eliminar_elem(not(H),L1,L2),
-	delete_repeated_properties(L2,NewT).
+	aplica_especificidad_recur(L2,NewT).
 
 
 
-%Verify if a class has a specific property
-class_has_property(Class,Property,KB,Answer):-
-	propiedades_de_una_clase(Class,KB,Properties),
-	incomplete_information(Property,Properties,Answer).
-
-incomplete_information(_,[], unknown).
-
-incomplete_information(Atom, List, yes):- member(Atom,List).
-
-incomplete_information(not(Atom), List, no):- member(Atom,List).
-
-incomplete_information(Atom, List, no):- member(not(Atom),List).
-
-incomplete_information(_, _, unknown).
-
-
-
-%Return the value of a class property
-class_property_value(Class,Property,KB,Value):-
-	propiedades_de_una_clase(Class,KB,ClassProperties),
-	find_value(Property,ClassProperties,Value).
-
-find_value(_,[],unknown).
-
-find_value(Attribute,[Attribute=>Value|_],Value).
-
-find_value(Attribute,[not(Attribute)|_],no).
-
-find_value(Attribute,[Attribute|_],yes).
-
-find_value(Attribute,[_|T],Value):-
-	find_value(Attribute,T,Value).
-
-
-
-%Obtiene la clase de un objeto dado su nombre
+%Obtiene la clase de un objeto dado su nombre (considerando objetos con multiples nombres)
 %Caso base:
 %	La clase de un objeto es desconocida si la KB
 %	es vacía, evitando la negación por falla
@@ -345,14 +295,26 @@ clase_lista_ids(Obj, [_|T]):-
 evalua_lista_nombres_clase(Obj, [id => Names, _, _]):-
 	member(Obj, Names).
 
-%Regresa una lista de propiedades de un objeto tomando en cuenta
-%la cerradura de la relación de herencia y el principio de especificidad.
+%new
+% Regresa una lista de propiedades de un objeto tomando en cuenta
+% la cerradura de la relación de herencia y el principio de especificidad.
+% Funcionamiento: 
+% - Verificamos la existencia del objeto en cuestión
+% - Obtenemos las propiedades específicas del objeto
+% - Obtenemos las propiedades heredadas, obteniendo la clase del objeto primero
+% 	y después obteniendo la madre recursivamente mientras se concatenan en una lista
+% 	las propiedades de cada madre
+% - Se concatenan las propiedades específicas del objeto con las propiedades heredadas
+% 	de las clases, obteniendo así una lista de propiedades ordenada de mayor a menor especificidad
+% - De la lista obtenida en el paso anterior, se eliminan todas las propiedades repetidas con menor especificidad
+% 	(es decir, tomando una propiedad en el Head de la lista, se busca la misma propiedad en el Tail y se elimina)
+% 	y se eliminan todas la propiedades negadas de menor especificidad para cada propiedad en el Head. 
 propiedades_de_un_objeto(Obj,KB,AllProperties):-
 	existencia_objeto(Obj,KB,yes),
 	propiedades_objeto(Obj,KB,PropsIndividuo),
 	propiedades_heredadas(Obj, KB, PropsHeredadas),
 	append(PropsIndividuo, PropsHeredadas, Props),
-	cancel_repeated_property_values(Props, AllProperties).
+	aplica_especificidad(Props, AllProperties).
 
 propiedades_de_un_objeto(_,_,unknown).
 
@@ -400,30 +362,6 @@ evalua_lista_nombres_props(Obj, [id => Names, Props,_], Props):-
 	member(Obj, Names).
 
 
-%Return the value of an object property
-object_property_value(Object,Property,KB,Value):-
-	existencia_objeto(Object,KB,yes),
-	propiedades_de_un_objeto(Object,KB,Properties),
-	find_value(Property,Properties,Value).
-
-object_property_value(_,_,_,unknown).
-
-
-
-%Consult the relations of a class
-relaciones_clase_herencia(top,KB,Relations):-
-	relaciones_clase(top,KB,Relations).
-
-relaciones_clase_herencia(Class,KB,Relations):-
-	existencia_clase(Class,KB,yes),
-	relaciones_clase(Class,KB,ClassRelations),
-	list_of_ancestors(Class,KB,Ancestors),
-	concat_ancestors_relations(Ancestors,KB,AncestorsRelations),
-	append([ClassRelations],AncestorsRelations,AllRelations),
-	cancel_repeated_property_values(AllRelations,Relations).
-
-relaciones_clase_herencia(_,_,unknown).
-
 
 relaciones_clase(_,[],[]).
 
@@ -433,54 +371,22 @@ relaciones_clase(Class,[_|T],Relations):-
 	relaciones_clase(Class,T,Relations).
 
 
-concat_ancestors_relations([],_,[]).
 
-concat_ancestors_relations([Ancestor|T],KB,[Relations|NewT]):-
-	concat_ancestors_relations(T,KB,NewT),
-	relaciones_clase(Ancestor,KB,Relations).
-
-
-
-%Return the value of a class relation
-class_relation_value(Class,Relation,KB,Value):-
-	existencia_clase(Class,KB,yes),
-	relaciones_clase_herencia(Class,KB,Relations),
-	find_value_relation(Relation,Relations,Value).
-
-class_relation_value(_,_,_,unknown).
-
-
-find_value_relation(not(Relation),Relations,Value):-
-	find_value_negative_relation(Relation,Relations,Value).
-
-find_value_relation(Relation,Relations,Value):-
-	find_value_positive_relation(Relation,Relations,Value).
-
-
-find_value_negative_relation(_,[],unknown).
-
-find_value_negative_relation(Attribute,[not(Attribute=>Value)|_],Value).
-
-find_value_negative_relation(Attribute,[_|T],Value):-
-	find_value_negative_relation(Attribute,T,Value).
-
-
-find_value_positive_relation(_,[],unknown).
-
-find_value_positive_relation(Attribute,[Attribute=>Value|_],Value).
-
-find_value_positive_relation(Attribute,[_|T],Value):-
-	find_value_positive_relation(Attribute,T,Value).
-
-
-
-%List all the relations of an object
+% Obtiene todas las relacioens de un objeto
+% 	-Validamos la existencia del objeto en cuestión
+% 	-Obtenemos las relaciones que ese objeto tiene especificamente
+% 	-Obtenemos las relaciones que el objeto hereda por su pertenencia a una clase
+% 	 y a las superclases de esa clase.
+% 	-Concatenamos las listas obtenidas en los dos pasos anteriores y 
+% 	 de manera análoga a la obtención de propiedades aplicamos el principio de especificidad
+% 	 utilizando el predicado que se utiliza para propiedades (esto se puede hacer porque este predicado
+% 	 considera propiedades de la forma atributo=>valor, que es precisamente la forma de las relaciones)
 relaciones_de_un_objeto(Object,KB,AllRelations):-
 	existencia_objeto(Object,KB,yes),
 	relaciones_objeto(Object,KB,ObjectRelations),
 	relaciones_heredadas(Object, KB, RelsHeredadas),
 	append(ObjectRelations,RelsHeredadas,Temp),
-	cancel_repeated_property_values(Temp,AllRelations).
+	aplica_especificidad(Temp,AllRelations).
 
 relaciones_de_un_objeto(_,_,unknown).
 
@@ -516,15 +422,6 @@ expandir_relaciones_clase([not(Relacion=>Ind)|T], KB, [not(Relacion=>Ind)|T2]):-
 	expandir_relaciones_clase(T, KB, T2).
 
 expandir_relaciones_clase([],_, []).
-
-%Return the value of an object relation
-object_relation_value(Object,Relation,KB,Value):-
-	existencia_objeto(Object,KB,yes),
-	relaciones_de_un_objeto(Object,KB,Relations),
-	find_value_relation(Relation,Relations,Value).
-
-object_relation_value(_,_,_,unknown).
-
 
 
 %Regresa las clases hijo de una clase
@@ -568,8 +465,18 @@ hijos_clases([],_,[]).
 hijos_clases([C|T],KB,[Hijos|T2]):-
 	hijos_clase_recur(C,KB,Hijos),
 	hijos_clases(T,KB,T2).
-	%append(Hijos_de_Hermanos,Hijos,Primos).
 
+%new
+% Obtiene los nombres de los objetos que pertenecen a la clase
+% bajo la cerradura de la relación de herencia
+% 	-Verificamos la existencia de la clase
+% 	-Obtenemos los nombres de objetos que pertenecen a la clase en específico
+% 	-Obtenemos los obtenemos los nombres de los objetos que pertenecen a las subclases
+% 	-Dado que el funcionamiento del predicado anterior nos dará una lista de listas
+% 	 y que posiblemente algún individuo pueda tener una lista de nombres, aplanamos
+% 	 a un nivel para poder mantener cualquier lista de nombres de un individuo.
+% 	-Concatenamos los nombres obtenidos del segundo punto con los nombres obtenidos
+% 	 del cuarto, para obtener la lista de objetos final
 nombre_objetos_clase_herencia(C, KB, Objs):-
 	existencia_clase(C, KB, yes),
 	objetos_clase(C, KB, CObjs),
@@ -579,7 +486,9 @@ nombre_objetos_clase_herencia(C, KB, Objs):-
 
 nombre_objetos_clase_herencia(_,_,unknown).
 
-
+%new
+%Obtiene los nombres de los individuos dentro de una lista de clases
+%la cual se asume que sus miembros son hermanos
 nombre_objetos_clases_cerradura([],_,[]).
 
 nombre_objetos_clases_cerradura(Clases, KB, [FObjs|Tail]):-
@@ -730,43 +639,8 @@ objetos_clases_completos([],_,[]).
 objetos_clases_completos([C|T],KB,[Objs|T2]):-
 	objetos_clase_completos(C,KB,Objs),
 	objetos_clases_completos(T,KB,T2).
-	%append(Objs,Objetos,Objetos_Clases).
 
 
-%Eliminate null prop
-eliminate_null_property([],[]).
-
-eliminate_null_property([_:unknown|T],NewT):-
-	eliminate_null_property(T,NewT).
-
-eliminate_null_property([X:Y|T],[X:Y|NewT]):-
-	eliminate_null_property(T,NewT).
-
-%Expand classes to objects
-expand_classes_to_objects([],[],_).
-
-expand_classes_to_objects([not(X=>Y)|T],[not(X=>Objects)|NewT],KB):-
-	existencia_clase(Y,KB,yes),
-	objetos_de_una_clase(Y,KB,Objects),
-	expand_classes_to_objects(T,NewT,KB).
-
-expand_classes_to_objects([X=>Y|T],[X=>Objects|NewT],KB):-
-	existencia_clase(Y,KB,yes),
-	objetos_de_una_clase(Y,KB,Objects),
-	expand_classes_to_objects(T,NewT,KB).
-
-expand_classes_to_objects([not(X=>Y)|T],[not(X=>[Y])|NewT],KB):-
-	expand_classes_to_objects(T,NewT,KB).
-
-expand_classes_to_objects([X=>Y|T],[X=>[Y]|NewT],KB):-
-	expand_classes_to_objects(T,NewT,KB).
-
-%Filter objects with property
-filter_objects_with_property(_,_,[],[]).
-
-filter_objects_with_property(KB,Property,[H|T],[H:Value|NewT]):-
-	object_property_value(H,Property,KB,Value),
-	filter_objects_with_property(KB,Property,T,NewT).
 
 
 mapea_todo_objeto_propiedades(KB, Objs_Props_Map):-
@@ -849,14 +723,26 @@ filtra_obj_rels([_|T], Rel, KB, Objs):-
 %Servicios principales
 %---------------------------------
 %Servicio para extensión de clase
+%Obtiene los nombres de los individuos que pertenecen a la clase (C)
+%bajo la cerradura de la relación de herencia
 extension_clase_nombres(C,KB,Objs):-
-	nombre_objetos_clase_herencia(C,KB,Objs).	
+	nombre_objetos_clase_herencia(C,KB,Objs).
 
+%Obtiene las listas que representan a los individuos que pertenecen a la clase (C)
+%bajo la cerradura de la relación de herencia
 extension_clase_objetos(C,KB,Objs):-
 	objetos_clase_herencia(C,KB,Objs).	
 
 
 %Servicio para clases de un individuo
+%Obtiene las clases a las que pertenece un individuo tomando en cuenta la relacion de herencia
+% Funcionamiento:
+% -Verficamos que exista el objeto
+% -Obtenemos la clase específica del objeto
+% -Obtenemos recursivamente la madre de la clase hasta llegar a la clase top
+% concatenando todas las clases madre en una lista
+% -Concatenamos lo obtenido en el paso dos con lo obtenido en el paso tres
+% produciendo la lista final de clases
 classes_of_individual(Object,KB,Classes):-
 	existencia_objeto(Object,KB,yes),
 	clase_de_objeto(Object,KB,C),
@@ -865,19 +751,65 @@ classes_of_individual(Object,KB,Classes):-
 
 classes_of_individual(_,_,unknown).
 
+%Servicio para obtener la extensión de una propiedad
+%Obtenemos todos los individuos que tienen una propiedad
+%dada tomando en cuenta la cerradura de la relación de herencia
+%y el principio de especificidad.
+% Funcionamiento:
+% 	- Hacemos un mapeo de todos los objetos en toda la jerarquía,
+% 	  utilizando la extensión de la clase Top, a las propiedades
+% 	  de cada uno utilizando el servicio de propiedades de individuo que a su
+% 	  vez toma en cuenta el principio de especificidad para resolver la no monotonicidad
+% 	- Del mapeo obtenido anteriormente, filtramos a los individuos que no tengan la propiedad buscada
+% 	  y formamos la lista.
+property_extension(Prop, KB, Res):-
+	mapea_todo_objeto_propiedades(KB, Objs_Props_Map),
+	filtra_obj_props(Objs_Props_Map, Prop, KB, Res).
+
+%Servicio para obtener las propiedades de un individuo o clase
+%Regresa una lista con las propiedades de un individuo
+propiedades_individuo(Object,KB,Properties):-
+	propiedades_de_un_objeto(Object,KB,Properties).
+%Regresa una lista con las propiedades de una clase
+class_properties(C, KB, Props):-
+	propiedades_de_una_clase(C, KB, Props).
+
 
 %Servicio para obtener la extensión de una relación
+%Obtiene todos los individuos que tienen la relación dada
+%en forma individuo:individuo, ya sea porque se definió
+%la relación explicitamente a nivel individuo, o 
+%a nivel de clase.
+% Funcionamiento general:
+% 	- Hacemos un mapeo de todos los objetos en toda la jerarquía,
+% 	  utilizando la extensión de la clase Top, a las relaciones
+% 	  de cada uno utilizando el servicio de relaciones de individuo (sin expandir las relaciones de clase) que a su
+% 	  vez toma en cuenta el principio de especificidad para resolver la no monotonicidad
+% 	- Del mapeo obtenido anteriormente, filtramos a los individuos que no tengan la relación buscada
+% 	  y formamos la lista.
 relation_extension(Rel, KB, Res):-
 	mapea_todo_objeto_relaciones(KB, Objs_Rels_Map),
 	filtra_obj_rels(Objs_Rels_Map, Rel, KB, Res).
 
-%Servicio para obtener las relaciones de un individuo
+%Servicio para obtener las relaciones de un individuo o de una clase
+% Obtiene todas las relaciones que un individuo tiene y los individuos con los cuales tiene
+% estas relaciones, ya sea porque la relación está especificada a nivel individuo o a nivel clase.
+% Funcionamiento general:
+% 	- Obtenemos las relaciones que tiene el individuo ya sea con otros individuos
+% 	  o con otra clase
+% 	- Expandimos las relaciones que tenga con otras clases colocando la extensión de las clases
+% 	  en vez de los nombres
 relations_of_individual(Object,KB,ExpandedRelations):-
 	relaciones_de_un_objeto(Object,KB,Relations),
 	expandir_relaciones_clase(Relations,KB, ExpandedRelations).
 
 relations_of_individual(_,_,unknown).
 
+%Obtiene todas las relaciones que una clase tiene con otras clases
+% Funcionamiento general:
+% 	- Se valida la existencia de la clase.
+% 	- Obtiene las relaciones específicas de la clase
+% 	- Obtiene las relaciones de los ancestros de la clase
 relations_of_class(C, KB, FClassRelations):-
 	existencia_clase(C, KB, yes),
 	relaciones_clase(C, KB, CRels),
@@ -886,16 +818,3 @@ relations_of_class(C, KB, FClassRelations):-
 	flatten(ClassRelations, FClassRelations).
 
 relations_of_class(_,_,unknown).
-
-%Servicio para obtener la extensión de una propiedad
-property_extension(Prop, KB, Res):-
-	mapea_todo_objeto_propiedades(KB, Objs_Props_Map),
-	filtra_obj_props(Objs_Props_Map, Prop, KB, Res).
-
-%Servicio para obtener las propiedades de un individuo
-%Regresa una lista con propiedades de un individuo
-propiedades_individuo(Object,KB,Properties):-
-	propiedades_de_un_objeto(Object,KB,Properties).
-
-class_properties(C, KB, Props):-
-	propiedades_de_una_clase(C, KB, Props).
